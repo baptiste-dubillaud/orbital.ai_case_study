@@ -6,14 +6,16 @@ import {
   useState,
   useRef,
   useCallback,
+  useEffect,
   ReactNode,
 } from "react";
-import { streamMessage } from "@/lib/api";
-import { ChatMessage, ReasoningItem, ToolCall } from "@/lib/types";
+import { streamMessage, fetchDatasets } from "@/lib/api";
+import { ChatMessage, DatasetInfo, ReasoningItem, ToolCall } from "@/lib/types";
 
 interface ChatContextValue {
   /* ── Data ── */
   messages: ChatMessage[];
+  datasets: DatasetInfo[];
 
   /* ── Streaming state ── */
   isLoading: boolean;
@@ -23,7 +25,7 @@ interface ChatContextValue {
   /* ── Input ── */
   input: string;
   setInput: (value: string) => void;
-  handleSend: () => void;
+  handleSend: (message?: string) => void;
 
   /* ── Derived ── */
   hasMessages: boolean;
@@ -87,6 +89,7 @@ function mergeToolResult(
 
 export function ChatProvider({ children }: { children: ReactNode }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [datasets, setDatasets] = useState<DatasetInfo[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [streamingContent, setStreamingContent] = useState("");
@@ -96,13 +99,20 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const reasoningRef = useRef<ReasoningItem[]>([]);
   const abortRef = useRef<AbortController | null>(null);
 
+  // Fetch dataset info on mount
+  useEffect(() => {
+    fetchDatasets()
+      .then(setDatasets)
+      .catch(() => setDatasets([]));
+  }, []);
+
   const hasMessages =
     messages.length > 0 ||
     !!streamingContent ||
     liveReasoning.length > 0;
 
-  const handleSend = useCallback(async () => {
-    const trimmed = input.trim();
+  const handleSend = useCallback(async (message?: string) => {
+    const trimmed = (message ?? input).trim();
     if (!trimmed || isLoading) return;
 
     const userMessage: ChatMessage = { role: "user", content: trimmed };
@@ -195,6 +205,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     <ChatContext.Provider
       value={{
         messages,
+        datasets,
         isLoading,
         streamingContent,
         liveReasoning,

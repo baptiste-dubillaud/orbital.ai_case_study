@@ -3,6 +3,7 @@
 import { useRef, useEffect, KeyboardEvent } from "react";
 import { motion } from "framer-motion";
 import { useChatContext } from "@/context/ChatContext";
+import DatasetCards from "./DatasetCards";
 import styles from "@/styles/components/ChatInput.module.css";
 
 export default function ChatInput() {
@@ -34,19 +35,22 @@ export default function ChatInput() {
       style={{
         position: hasMessages ? "sticky" : "absolute",
         bottom: hasMessages ? 0 : "auto",
-        top: hasMessages ? "auto" : "50%",
+        top: hasMessages ? "auto" : "20%",
         transform: hasMessages ? "none" : "translateY(-50%)",
       }}
       transition={{ type: "spring", stiffness: 200, damping: 25 }}
     >
       {!hasMessages && (
-        <motion.h1
-          className={styles.title}
-          initial={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-        >
-          What can I help you with?
-        </motion.h1>
+        <>
+            <motion.h1
+            className={styles.title}
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            >
+            What can I help you with?
+            </motion.h1>
+            <DatasetCards />
+        </>
       )}
 
       <div className={styles.container}>

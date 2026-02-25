@@ -1,3 +1,11 @@
+/* ── Dataset info ── */
+export interface DatasetInfo {
+  name: string;
+  rows: number;
+  columns: number;
+  column_names: string[];
+}
+
 /* ── Reasoning items ── */
 export type ReasoningItem =
   | { type: "thinking"; content: string }

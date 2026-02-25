@@ -16,7 +16,6 @@ from pydantic_ai.messages import (
     FunctionToolCallEvent,
     FunctionToolResultEvent,
     ToolReturnPart,
-    RetryPromptPart,
     TextPart,
 )
 
