@@ -32,6 +32,17 @@ async def visualize(
     if ctx.deps.current_dataframe is None:
         return "Error: No data available. Call query_data first."
 
+    ctx.deps.event_queue.put_nowait(
+        (
+            "ToolCall",
+            {
+                "tool": "visualize",
+                "description": description,
+                "args": {"title": title, "result_type": result_type},
+            },
+        )
+    )
+
     df = ctx.deps.current_dataframe
 
     try:
@@ -54,7 +65,7 @@ async def visualize(
             filepath = f"output/{safe_title}.html"
             fig.write_html(filepath)
 
-            return (
+            result_str = (
                 f"Figure created: {title}\n"
                 f"Saved to: {filepath}\n"
                 f"Type: {type(fig).__name__}\n"
@@ -67,7 +78,7 @@ async def visualize(
             filepath = f"output/{safe_title}.csv"
             result.to_csv(filepath, index=False)
 
-            return (
+            result_str = (
                 f"Table created: {title}\n"
                 f"Saved to: {filepath}\n"
                 f"Shape: {result.shape[0]} rows x {result.shape[1]} columns\n"
@@ -75,7 +86,16 @@ async def visualize(
             )
 
         else:
-            return f"Error: Unknown result_type '{result_type}'. Use 'figure' or 'table'."
+            result_str = f"Error: Unknown result_type '{result_type}'. Use 'figure' or 'table'."
+
+        ctx.deps.event_queue.put_nowait(
+            ("ToolResult", {"tool": "visualize", "result": result_str})
+        )
+        return result_str
 
     except Exception as e:
-        return f"Error creating visualization: {e}"
+        error_msg = f"Error creating visualization: {e}"
+        ctx.deps.event_queue.put_nowait(
+            ("ToolResult", {"tool": "visualize", "result": error_msg})
+        )
+        return error_msg

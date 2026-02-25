@@ -1,10 +1,37 @@
 services:
-  agent:
-    build: .
-    stdin_open: true
-    tty: true
+  api:
+    build: ./backend/
     env_file:
       - .env
     volumes:
-      - ./data:/app/data
-      - ./output:/app/output
+      - ./backend/data:/app/data
+      - ./backend/output:/app/output
+      - ./backend/src:/app/src
+    ports:
+      - "8000:8000"
+    develop:
+      watch:
+      - path: ./backend/data
+        action: sync
+        target: /app/data
+      - path: ./backend/src
+        action: sync
+        target: /app/src
+
+  front:
+    build: ./frontend/
+    env_file:
+      - .env
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend/src:/app/src
+    depends_on:
+      - api
+    develop:
+      watch:
+        - path: ./frontend/src
+          action: sync
+          target: /app/src

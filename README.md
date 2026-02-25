@@ -54,18 +54,23 @@ case_fullstack/
 ## Setup
 
 ```bash
-# 1. Configurer la clé API
+# 1. Configurer l'environnement
 cp .env.example .env
-# Éditer .env avec ta clé API
+# Vérifier surtout: LLM_BASE_URL, LLM_MODEL, LLM_API_KEY
 
-# 2. Ajouter des fichiers CSV dans data/
+# 2. Lancer Ollama en local (host)
+ollama serve
+ollama pull qwen2.5:7b
 
-# 3. Lancer le CLI via Docker
+# 3. Ajouter des fichiers CSV dans data/
+
+# 4. Lancer le CLI via Docker
 docker compose run --rm agent
 ```
 
 > Le volume `data/` est monté dans le container — tu peux ajouter/modifier des CSV sans rebuild.
 > Les visualisations générées sont dans `output/`.
+> Sur macOS Docker Desktop, `host.docker.internal` permet au container d'appeler Ollama lancé sur ta machine.
 
 ---
 
