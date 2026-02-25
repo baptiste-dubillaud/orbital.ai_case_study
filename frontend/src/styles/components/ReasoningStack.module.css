@@ -37,15 +37,20 @@
   font-weight: 500;
 }
 
-.content {
-  margin-top: 6px;
+/* ── Shared reasoning stack (live + finalized) ── */
+.stack {
+  align-self: flex-start;
+  max-width: 80%;
+  padding: 12px 16px;
+  border-left: 3px solid #444;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 0 12px 12px 0;
+  color: #888;
+  font-size: 0.9rem;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  font-size: 0.82rem;
-  color: #999;
+  gap: 8px;
 }
-
 .thinking {
   border-left: 2px solid #444;
   padding-left: 10px;
@@ -59,6 +64,7 @@
   color: #888;
 }
 
+/* ── Tool call block ── */
 .toolEvent {
   padding-left: 2px;
   color: #999;
@@ -70,98 +76,48 @@
 }
 
 .toolResult summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   color: #81c995;
   font-weight: 500;
   user-select: none;
   list-style: none;
+  padding: 2px 0;
 }
 
 .toolResult summary::-webkit-details-marker {
   display: none;
 }
 
-.toolResult pre {
-  margin: 4px 0 0;
-  padding: 6px 8px;
-  background: rgba(0, 0, 0, 0.25);
-  border-radius: 4px;
-  font-size: 0.78rem;
-  line-height: 1.35;
-  overflow-x: auto;
-  color: #aaa;
-  white-space: pre-wrap;
-  word-break: break-word;
+.toolIcon {
+  font-size: 0.75rem;
+  flex-shrink: 0;
 }
 
-/* ── Live thinking block (streaming) ── */
-.liveThinkingBlock {
-  align-self: flex-start;
-  max-width: 80%;
-  padding: 12px 16px;
-  border-left: 3px solid #444;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 0 12px 12px 0;
+.toolStatus {
+  font-weight: 400;
+  font-style: italic;
   color: #888;
-  font-size: 0.9rem;
+  font-size: 0.78rem;
 }
 
-.liveThinkingHeader {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.8rem;
+.toolSection {
+  margin: 4px 0 0 18px;
+}
+
+.toolSectionLabel {
+  display: block;
+  font-size: 0.7rem;
   font-weight: 600;
-  color: #666;
-  margin-bottom: 6px;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
+  color: #666;
+  margin-bottom: 2px;
 }
 
-.liveThinkingIcon {
-  font-size: 1rem;
-}
-
-.liveThinkingText {
+.toolResult pre {
   margin: 0;
-  white-space: pre-wrap;
-  line-height: 1.5;
-  font-style: italic;
-}
-
-/* ── Live tool event (streaming) ── */
-.liveToolBlock {
-  align-self: flex-start;
-  max-width: 80%;
-  padding: 8px 14px;
-  font-size: 0.88rem;
-  color: #999;
-}
-
-.liveToolHeader {
-  font-style: italic;
-  color: #888;
-  font-weight: 500;
-}
-
-.liveToolDetails {
-  margin-top: 4px;
-  cursor: pointer;
-}
-
-.liveToolDetails summary {
-  color: #81c995;
-  font-size: 0.8rem;
-  font-weight: 500;
-  user-select: none;
-  list-style: none;
-}
-
-.liveToolDetails summary::-webkit-details-marker {
-  display: none;
-}
-
-.liveToolPre {
-  margin: 4px 0 0;
   padding: 6px 8px;
   background: rgba(0, 0, 0, 0.25);
   border-radius: 4px;
@@ -171,4 +127,6 @@
   color: #aaa;
   white-space: pre-wrap;
   word-break: break-word;
+  max-height: 200px;
+  overflow-y: auto;
 }

@@ -3,20 +3,18 @@
 import { useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useChatContext } from "@/context/ChatContext";
-import ChatBubble from "./ChatBubble";
-import { LiveReasoningStack } from "./ReasoningStack";
-import LLMGeneration from "./LLMGeneration";
+import ChatBubble, { LiveChatBubble } from "./ChatBubble";
 import ChatInput from "./ChatInput";
 import styles from "@/styles/components/ChatLayout.module.css";
 
 export default function ChatLayout() {
-  const { messages, hasMessages, streamingContent, thinkingContent, liveToolCall } =
+  const { messages, hasMessages, streamingContent, liveReasoning } =
     useChatContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, streamingContent, thinkingContent, liveToolCall]);
+  }, [messages, streamingContent, liveReasoning]);
 
   return (
     <div className={styles.container}>
@@ -34,8 +32,7 @@ export default function ChatLayout() {
                 <ChatBubble key={i} message={msg} index={i} />
               ))}
 
-              <LiveReasoningStack />
-              <LLMGeneration />
+              <LiveChatBubble />
 
               <div ref={messagesEndRef} />
             </div>

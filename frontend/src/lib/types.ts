@@ -1,8 +1,13 @@
+/* ── Reasoning items ── */
+export type ReasoningItem =
+  | { type: "thinking"; content: string }
+  | { type: "tool_call"; toolCall: ToolCall };
+
 /* History messages */
 export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
-  reasoning?: [string | ToolCall];
+  reasoning?: ReasoningItem[];
 }
 
 export interface ToolCall {
@@ -24,8 +29,10 @@ export interface ChatMessageRequest {
 
 /* Callbacks for streaming responses */
 export interface StreamCallbacks {
+  onThinkingChunk: (chunk: string) => void;
+  onToolCall: (toolCall: ToolCall) => void;
+  onToolResult: (toolCallId: string, toolName: string, result: string) => void;
   onContent: (chunk: string) => void;
-  onNewReasoning: (reasoning: [string | ToolCall]) => void;
   onDone: () => void;
   onError: (error: string) => void;
 }

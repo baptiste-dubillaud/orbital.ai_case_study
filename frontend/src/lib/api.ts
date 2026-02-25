@@ -55,7 +55,7 @@ export async function streamMessage(
       switch (event) {
         case "thinking": {
           const parsed = JSON.parse(data);
-          callbacks.onNewReasoning([parsed.content as string]);
+          callbacks.onThinkingChunk(parsed.content as string);
           break;
         }
         case "content": {
@@ -70,17 +70,16 @@ export async function streamMessage(
             toolName: parsed.tool_name,
             args: parsed.args ? JSON.parse(parsed.args) : undefined,
           };
-          callbacks.onNewReasoning([tc]);
+          callbacks.onToolCall(tc);
           break;
         }
         case "tool_result": {
           const parsed = JSON.parse(data);
-          const tc: ToolCall = {
-            toolCallId: parsed.tool_call_id,
-            toolName: parsed.tool_name ?? "",
-            result: parsed.result,
-          };
-          callbacks.onNewReasoning([tc]);
+          callbacks.onToolResult(
+            parsed.tool_call_id,
+            parsed.tool_name ?? "",
+            parsed.result,
+          );
           break;
         }
         case "Done":
