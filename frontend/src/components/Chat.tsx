@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback, KeyboardEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChatMessage, ToolEvent, ToolCallData, ToolResultData, streamMessage } from "@/lib/api";
+import { streamMessage } from "@/lib/api";
+import { ChatMessage, ToolCall } from "@/lib/types";
 import ChatBubble from "./ChatBubble";
 import MarkdownRenderer from "./MarkdownRenderer";
 import styles from "./Chat.module.css";
@@ -14,21 +15,20 @@ export default function Chat() {
   const [streamingContent, setStreamingContent] = useState("");
   const [thinkingContent, setThinkingContent] = useState("");
   const [isThinking, setIsThinking] = useState(false);
-  const [toolEvents, setToolEvents] = useState<ToolEvent[]>([]);
+  const [liveToolCall, setLiveToolCall] = useState<ToolCall | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   // Refs to accumulate data for the finalized message
   const contentRef = useRef("");
-  const thinkingRef = useRef("");
-  const toolEventsRef = useRef<ToolEvent[]>([]);
+  const reasoningRef = useRef<(string | ToolCall)[]>([]);
 
-  const hasMessages = messages.length > 0 || streamingContent || isThinking || toolEvents.length > 0;
+  const hasMessages = messages.length > 0 || streamingContent || isThinking || liveToolCall !== null;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, streamingContent, thinkingContent, toolEvents]);
+  }, [messages, streamingContent, thinkingContent, liveToolCall]);
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -50,39 +50,38 @@ export default function Chat() {
     setStreamingContent("");
     setThinkingContent("");
     setIsThinking(false);
-    setToolEvents([]);
+    setLiveToolCall(null);
 
     // Reset refs
     contentRef.current = "";
-    thinkingRef.current = "";
-    toolEventsRef.current = [];
+    reasoningRef.current = [];
 
     const controller = new AbortController();
     abortRef.current = controller;
 
     try {
       await streamMessage(
-        updatedMessages,
+        { messages: updatedMessages.map((msg) => ({ role: msg.role, content: msg.content })) },
         {
-          onThinking: (chunk) => {
-            setIsThinking(true);
-            thinkingRef.current += chunk;
-            setThinkingContent((prev) => prev + chunk);
-          },
           onContent: (chunk) => {
             setIsThinking(false);
+            setLiveToolCall(null);
             contentRef.current += chunk;
             setStreamingContent((prev) => prev + chunk);
           },
-          onToolCall: (data: ToolCallData) => {
-            const evt: ToolEvent = { kind: "call", tool: data.tool, description: data.description, args: data.args };
-            toolEventsRef.current = [...toolEventsRef.current, evt];
-            setToolEvents((prev) => [...prev, evt]);
-          },
-          onToolResult: (data: ToolResultData) => {
-            const evt: ToolEvent = { kind: "result", tool: data.tool, result: data.result };
-            toolEventsRef.current = [...toolEventsRef.current, evt];
-            setToolEvents((prev) => [...prev, evt]);
+          onNewReasoning: (reasoning) => {
+            const item = reasoning[0];
+            if (typeof item === "string") {
+              // Thinking content
+              setIsThinking(true);
+              setLiveToolCall(null);
+              setThinkingContent((prev) => prev + item);
+            } else {
+              // ToolCall
+              setIsThinking(false);
+              setLiveToolCall(item);
+            }
+            reasoningRef.current = [...reasoningRef.current, item];
           },
           onDone: () => {
             // Will be finalized below
@@ -100,11 +99,8 @@ export default function Chat() {
           role: "assistant",
           content: contentRef.current,
         };
-        if (thinkingRef.current) {
-          assistantMsg.thinking = thinkingRef.current;
-        }
-        if (toolEventsRef.current.length > 0) {
-          assistantMsg.toolEvents = toolEventsRef.current;
+        if (reasoningRef.current.length > 0) {
+          assistantMsg.reasoning = reasoningRef.current as [string | ToolCall];
         }
         setMessages((prev) => [...prev, assistantMsg]);
       }
@@ -118,7 +114,7 @@ export default function Chat() {
       setStreamingContent("");
       setThinkingContent("");
       setIsThinking(false);
-      setToolEvents([]);
+      setLiveToolCall(null);
       abortRef.current = null;
     }
   }, [input, isLoading, messages]);
@@ -162,31 +158,28 @@ export default function Chat() {
                 </motion.div>
               )}
 
-              {/* Live tool event (while streaming) — show only the last one */}
-              {toolEvents.length > 0 && (() => {
-                const last = toolEvents[toolEvents.length - 1];
-                return (
-                  <motion.div
-                    key={`tool-live-${toolEvents.length}`}
-                    className={styles.liveToolBlock}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.15 }}
-                  >
-                    <div className={styles.liveToolHeader}>
-                      {last.kind === "call"
-                        ? `Using ${last.tool}…`
-                        : `${last.tool} finished`}
-                    </div>
-                    {last.kind === "result" && last.result && (
-                      <details className={styles.liveToolDetails}>
-                        <summary>Show result</summary>
-                        <pre className={styles.liveToolPre}>{last.result}</pre>
-                      </details>
-                    )}
-                  </motion.div>
-                );
-              })()}
+              {/* Live tool event (while streaming) — show the current tool call */}
+              {liveToolCall && (
+                <motion.div
+                  key={`tool-live-${liveToolCall.toolCallId}`}
+                  className={styles.liveToolBlock}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <div className={styles.liveToolHeader}>
+                    {liveToolCall.result
+                      ? `${liveToolCall.toolName} finished`
+                      : `Using ${liveToolCall.toolName}…`}
+                  </div>
+                  {liveToolCall.result && (
+                    <details className={styles.liveToolDetails}>
+                      <summary>Show result</summary>
+                      <pre className={styles.liveToolPre}>{liveToolCall.result}</pre>
+                    </details>
+                  )}
+                </motion.div>
+              )}
 
               {/* Streaming content */}
               {streamingContent && (
@@ -201,7 +194,7 @@ export default function Chat() {
               )}
 
               {/* Loading indicator (before any content arrives) */}
-              {isLoading && !streamingContent && !isThinking && toolEvents.length === 0 && (
+              {isLoading && !streamingContent && !isThinking && !liveToolCall && (
                 <motion.div
                   className={styles.typingIndicator}
                   initial={{ opacity: 0 }}

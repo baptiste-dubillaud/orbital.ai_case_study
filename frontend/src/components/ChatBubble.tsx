@@ -2,7 +2,7 @@
 
 import { memo, useState } from "react";
 import { motion } from "framer-motion";
-import { ChatMessage, ToolEvent } from "@/lib/api";
+import { ChatMessage, ToolCall } from "@/lib/types";
 import MarkdownRenderer from "./MarkdownRenderer";
 import styles from "./Chat.module.css";
 
@@ -11,22 +11,20 @@ interface ChatBubbleProps {
   index: number;
 }
 
-function MetadataSection({
-  thinking,
-  toolEvents,
-}: {
-  thinking?: string;
-  toolEvents?: ToolEvent[];
-}) {
+function ReasoningSection({ reasoning }: { reasoning: (string | ToolCall)[] }) {
   const [open, setOpen] = useState(false);
 
-  const hasThinking = !!thinking;
-  const hasTools = toolEvents && toolEvents.length > 0;
-  if (!hasThinking && !hasTools) return null;
+  if (!reasoning || reasoning.length === 0) return null;
 
-  const toolNames = hasTools
-    ? [...new Set(toolEvents.filter((e) => e.kind === "call").map((e) => e.tool))]
-    : [];
+  const toolNames = [
+    ...new Set(
+      reasoning
+        .filter((item): item is ToolCall => typeof item !== "string")
+        .map((tc) => tc.toolName)
+    ),
+  ];
+
+  const hasThinking = reasoning.some((item) => typeof item === "string");
 
   const label = [
     hasThinking ? "Reasoning" : "",
@@ -49,27 +47,24 @@ function MetadataSection({
       </button>
       {open && (
         <div className={styles.metadataContent}>
-          {hasThinking && (
-            <div className={styles.metadataThinking}>
-              <p className={styles.metadataThinkingText}>{thinking}</p>
-            </div>
-          )}
-          {hasTools &&
-            toolEvents.map((evt, i) => (
-              <div key={i} className={styles.metadataToolEvent}>
-                {evt.kind === "call" ? (
-                  <span>
-                    <strong>{evt.tool}</strong>
-                    {evt.description ? ` — ${evt.description}` : ""}
-                  </span>
-                ) : (
-                  <details className={styles.metadataToolResult}>
-                    <summary>{evt.tool} result</summary>
-                    <pre>{evt.result}</pre>
-                  </details>
-                )}
+          {reasoning.map((item, i) =>
+            typeof item === "string" ? (
+              <div key={i} className={styles.metadataThinking}>
+                <p className={styles.metadataThinkingText}>{item}</p>
               </div>
-            ))}
+            ) : (
+              <div key={i} className={styles.metadataToolEvent}>
+                <details className={styles.metadataToolResult}>
+                  <summary>
+                    <strong>{item.toolName}</strong>
+                    {item.result ? " — result" : " — pending"}
+                  </summary>
+                  {item.args && <pre>{JSON.stringify(item.args, null, 2)}</pre>}
+                  {item.result && <pre>{item.result}</pre>}
+                </details>
+              </div>
+            )
+          )}
         </div>
       )}
     </div>
@@ -78,7 +73,7 @@ function MetadataSection({
 
 function ChatBubble({ message, index }: ChatBubbleProps) {
   const isUser = message.role === "user";
-  const hasMetadata = !isUser && (message.thinking || message.toolEvents?.length);
+  const hasReasoning = !isUser && message.reasoning && message.reasoning.length > 0;
 
   return (
     <motion.div
@@ -87,9 +82,7 @@ function ChatBubble({ message, index }: ChatBubbleProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, delay: index * 0.02 }}
     >
-      {hasMetadata && (
-        <MetadataSection thinking={message.thinking} toolEvents={message.toolEvents} />
-      )}
+      {hasReasoning && <ReasoningSection reasoning={message.reasoning!} />}
       {isUser ? (
         <p className={styles.bubbleText}>{message.content}</p>
       ) : (

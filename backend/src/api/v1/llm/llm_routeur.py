@@ -10,7 +10,6 @@ from pydantic_ai.messages import (
     ModelRequest,
     ModelResponse,
     UserPromptPart,
-    ThinkingPart,
     ThinkingPartDelta,
     TextPartDelta,
     PartDeltaEvent,
@@ -37,7 +36,7 @@ class ChatRequest(BaseModel):
     messages: list[MessagePayload]
 
 
-def format_sse(event: str, content: str) -> str:
+def format_sse(event: str, content: str | dict) -> str:
     """Format a Server-Sent Event string with a text content payload."""
     payload = json.dumps({"content": content})
     return f"event: {event}\ndata: {payload}\n\n"
@@ -79,6 +78,7 @@ async def generate_stream(request: ChatRequest) -> AsyncGenerator[str, None]:
     history = build_message_history(request.messages[:-1])
     user_prompt = request.messages[-1].content
 
+    logger.info(f"Received chat request with prompt: {user_prompt} and history of {len(history)} messages")
 
     try:
         async for event in agent.run_stream_events(
@@ -89,17 +89,17 @@ async def generate_stream(request: ChatRequest) -> AsyncGenerator[str, None]:
             
             # Text content delta
             if isinstance(event, PartDeltaEvent) and isinstance(event.delta, TextPartDelta):
-                logger.info(f"Got text delta: {event.delta.content_delta}")
+                logger.debug(f"Got text delta: {event.delta.content_delta}")
                 yield format_sse(event="content", content=event.delta.content_delta)
 
             # Thinking delta
             elif isinstance(event, PartDeltaEvent) and isinstance(event.delta, ThinkingPartDelta):
-                logger.info(f"Got thinking delta: {event.delta.content_delta}")
+                logger.debug(f"Got thinking delta: {event.delta.content_delta}")
                 yield format_sse(event="thinking", content=event.delta.content_delta)
 
             # Tool call fired
             elif isinstance(event, FunctionToolCallEvent):
-                logger.info(f"Got tool call event: {event.part.tool_name} with args {event.part.args}")
+                logger.debug(f"Got tool call event: {event.part.tool_name} with args {event.part.args}")
                 yield format_sse_data(
                     event="tool_call",
                     data={
@@ -111,7 +111,7 @@ async def generate_stream(request: ChatRequest) -> AsyncGenerator[str, None]:
 
             # Tool result returned
             elif isinstance(event, FunctionToolResultEvent):
-                logger.info(f"Got tool result event: {event.tool_call_id} with result {event.content}")
+                logger.debug(f"Got tool result event: {event.tool_call_id} with result {event.content}")
                 yield format_sse_data(
                     event="tool_result",
                     data={
