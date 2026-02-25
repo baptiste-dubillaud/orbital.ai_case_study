@@ -15,6 +15,8 @@ from pydantic_ai.messages import (
     PartDeltaEvent,
     FunctionToolCallEvent,
     FunctionToolResultEvent,
+    ToolReturnPart,
+    RetryPromptPart,
     TextPart,
 )
 
@@ -111,14 +113,15 @@ async def generate_stream(request: ChatRequest) -> AsyncGenerator[str, None]:
 
             # Tool result returned
             elif isinstance(event, FunctionToolResultEvent):
-                logger.debug(f"Got tool result event: {event.tool_call_id} with result {event.content}")
-                yield format_sse_data(
-                    event="tool_result",
-                    data={
-                        "result": event.content,
-                        "tool_call_id": event.tool_call_id,
-                    },
-                )
+                if isinstance(event.result, ToolReturnPart):
+                    logger.debug(f"Got tool result event: {event.tool_call_id} with result {event.result.content}")
+                    yield format_sse_data(
+                        event="tool_result",
+                        data={
+                            "result": event.result.content,
+                            "tool_call_id": event.tool_call_id,
+                        },
+                    )
     
     except Exception as e:
         logger.error(f"Streaming error: {e}", exc_info=True)
