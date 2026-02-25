@@ -1,79 +1,21 @@
 "use client";
 
-import { memo, useState } from "react";
+import { memo } from "react";
 import { motion } from "framer-motion";
-import { ChatMessage, ToolCall } from "@/lib/types";
+import { ChatMessage } from "@/lib/types";
 import MarkdownRenderer from "./MarkdownRenderer";
-import styles from "./Chat.module.css";
+import { ReasoningSection } from "./ReasoningStack";
+import styles from "@/styles/components/ChatBubble.module.css";
 
 interface ChatBubbleProps {
   message: ChatMessage;
   index: number;
 }
 
-function ReasoningSection({ reasoning }: { reasoning: (string | ToolCall)[] }) {
-  const [open, setOpen] = useState(false);
-
-  if (!reasoning || reasoning.length === 0) return null;
-
-  const toolNames = [
-    ...new Set(
-      reasoning
-        .filter((item): item is ToolCall => typeof item !== "string")
-        .map((tc) => tc.toolName)
-    ),
-  ];
-
-  const hasThinking = reasoning.some((item) => typeof item === "string");
-
-  const label = [
-    hasThinking ? "Reasoning" : "",
-    toolNames.length > 0 ? toolNames.join(", ") : "",
-  ]
-    .filter(Boolean)
-    .join(" · ");
-
-  return (
-    <div className={styles.metadataSection}>
-      <button
-        className={styles.metadataToggle}
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-      >
-        <span className={`${styles.metadataArrow} ${open ? styles.metadataArrowOpen : ""}`}>
-          ▸
-        </span>
-        <span className={styles.metadataLabel}>{label}</span>
-      </button>
-      {open && (
-        <div className={styles.metadataContent}>
-          {reasoning.map((item, i) =>
-            typeof item === "string" ? (
-              <div key={i} className={styles.metadataThinking}>
-                <p className={styles.metadataThinkingText}>{item}</p>
-              </div>
-            ) : (
-              <div key={i} className={styles.metadataToolEvent}>
-                <details className={styles.metadataToolResult}>
-                  <summary>
-                    <strong>{item.toolName}</strong>
-                    {item.result ? " — result" : " — pending"}
-                  </summary>
-                  {item.args && <pre>{JSON.stringify(item.args, null, 2)}</pre>}
-                  {item.result && <pre>{item.result}</pre>}
-                </details>
-              </div>
-            )
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
 function ChatBubble({ message, index }: ChatBubbleProps) {
   const isUser = message.role === "user";
-  const hasReasoning = !isUser && message.reasoning && message.reasoning.length > 0;
+  const hasReasoning =
+    !isUser && message.reasoning && message.reasoning.length > 0;
 
   return (
     <motion.div

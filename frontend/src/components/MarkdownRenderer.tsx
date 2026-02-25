@@ -2,7 +2,7 @@
 
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import styles from "./Markdown.module.css";
+import styles from "@/styles/components/Markdown.module.css";
 import { ReactNode } from "react";
 
 interface MarkdownRendererProps {
