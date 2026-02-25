@@ -19,10 +19,6 @@ async def query_data(
     if not ctx.deps.datasets:
         return "Error: No datasets loaded."
 
-    ctx.deps.event_queue.put_nowait(
-        ("ToolCall", {"tool": "query_data", "description": description})
-    )
-
     try:
         with duckdb.connect(database=":memory:") as conn:
             for name, df in ctx.deps.datasets.items():
@@ -39,14 +35,8 @@ async def query_data(
             f"Preview:\n{preview}"
         )
 
-        ctx.deps.event_queue.put_nowait(
-            ("ToolResult", {"tool": "query_data", "result": summary})
-        )
         return summary
 
     except Exception as e:
         error_msg = f"Error executing SQL query: {e}"
-        ctx.deps.event_queue.put_nowait(
-            ("ToolResult", {"tool": "query_data", "result": error_msg})
-        )
         return error_msg

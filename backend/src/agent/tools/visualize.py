@@ -32,17 +32,6 @@ async def visualize(
     if ctx.deps.current_dataframe is None:
         return "Error: No data available. Call query_data first."
 
-    ctx.deps.event_queue.put_nowait(
-        (
-            "ToolCall",
-            {
-                "tool": "visualize",
-                "description": description,
-                "args": {"title": title, "result_type": result_type},
-            },
-        )
-    )
-
     df = ctx.deps.current_dataframe
 
     try:
@@ -88,14 +77,8 @@ async def visualize(
         else:
             result_str = f"Error: Unknown result_type '{result_type}'. Use 'figure' or 'table'."
 
-        ctx.deps.event_queue.put_nowait(
-            ("ToolResult", {"tool": "visualize", "result": result_str})
-        )
         return result_str
 
     except Exception as e:
         error_msg = f"Error creating visualization: {e}"
-        ctx.deps.event_queue.put_nowait(
-            ("ToolResult", {"tool": "visualize", "result": error_msg})
-        )
         return error_msg
