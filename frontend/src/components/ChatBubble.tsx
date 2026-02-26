@@ -1,6 +1,6 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { ChatMessage } from "@/lib/types";
 import { useChatContext } from "@/context/ChatContext";
@@ -43,8 +43,42 @@ export default memo(ChatBubble);
 
 /* ── Live (in-progress) assistant bubble ── */
 
+const STALE_THINKING_MS = 500;
+
 export function LiveChatBubble() {
   const { isLoading, streamingContent, liveReasoning } = useChatContext();
+  const [stale, setStale] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Detect when thinking stops updating but we're still waiting
+  useEffect(() => {
+    if (!isLoading) {
+      setStale(false);
+      return;
+    }
+
+    const hasThinking = liveReasoning.some((r) => r.type === "thinking");
+    const hasToolCall = liveReasoning.some((r) => r.type === "tool_call");
+    const hasContent = !!streamingContent;
+
+    // Reset stale whenever a tool call or content arrives
+    if (hasToolCall || hasContent) {
+      setStale(false);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      return;
+    }
+
+    // Restart the timer on every reasoning update (content grows even if length stays 1)
+    setStale(false);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (hasThinking) {
+      timerRef.current = setTimeout(() => setStale(true), STALE_THINKING_MS);
+    }
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [isLoading, liveReasoning, streamingContent]);
 
   if (!isLoading) return null;
 
@@ -57,7 +91,7 @@ export function LiveChatBubble() {
   return (
     <>
       {hasReasoning && (
-        <ReasoningStack items={liveReasoning} expanded={reasoningExpanded} />
+        <ReasoningStack items={liveReasoning} expanded={reasoningExpanded} callingTool={stale && !hasContent} />
       )}
 
       {hasContent ? (
@@ -70,7 +104,7 @@ export function LiveChatBubble() {
           <MarkdownRenderer content={streamingContent} />
         </motion.div>
       ) : (
-        !hasReasoning && (
+        !hasReasoning && !stale && (
           <div className={styles.typingIndicator}>
             <span className={styles.dot} />
             <span className={styles.dot} />

@@ -72,10 +72,16 @@ export async function streamMessage(
         }
         case "tool_call": {
           const parsed = JSON.parse(data);
+          let args: Record<string, unknown> | undefined;
+          if (parsed.args && typeof parsed.args === "string" && parsed.args.length > 0) {
+            try { args = JSON.parse(parsed.args); } catch { args = undefined; }
+          } else if (parsed.args && typeof parsed.args === "object") {
+            args = parsed.args;
+          }
           const tc: ToolCall = {
             toolCallId: parsed.tool_call_id,
-            toolName: parsed.tool_name,
-            args: parsed.args ? JSON.parse(parsed.args) : undefined,
+            toolName: parsed.tool_name ?? "",
+            ...(args && { args }),
           };
           callbacks.onToolCall(tc);
           break;

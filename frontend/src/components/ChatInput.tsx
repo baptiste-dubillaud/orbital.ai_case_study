@@ -66,7 +66,7 @@ export default function ChatInput() {
         />
         <button
           className={styles.sendButton}
-          onClick={handleSend}
+          onClick={() => handleSend()}
           disabled={!input.trim() || isLoading}
           aria-label="Send message"
         >

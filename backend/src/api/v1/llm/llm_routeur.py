@@ -1,4 +1,3 @@
-import asyncio
 import json
 import logging
 from typing import AsyncGenerator
@@ -90,17 +89,14 @@ async def generate_stream(request: ChatRequest) -> AsyncGenerator[str, None]:
             
             # Text content delta
             if isinstance(event, PartDeltaEvent) and isinstance(event.delta, TextPartDelta):
-                logger.debug(f"Got text delta: {event.delta.content_delta}")
                 yield format_sse(event="content", content=event.delta.content_delta)
 
             # Thinking delta
             elif isinstance(event, PartDeltaEvent) and isinstance(event.delta, ThinkingPartDelta):
-                logger.debug(f"Got thinking delta: {event.delta.content_delta}")
                 yield format_sse(event="thinking", content=event.delta.content_delta)
 
-            # Tool call fired
+            # Tool call fired (right before execution)
             elif isinstance(event, FunctionToolCallEvent):
-                logger.debug(f"Got tool call event: {event.part.tool_name} with args {event.part.args}")
                 yield format_sse_data(
                     event="tool_call",
                     data={
@@ -113,7 +109,6 @@ async def generate_stream(request: ChatRequest) -> AsyncGenerator[str, None]:
             # Tool result returned
             elif isinstance(event, FunctionToolResultEvent):
                 if isinstance(event.result, ToolReturnPart):
-                    logger.debug(f"Got tool result event: {event.tool_call_id} with result {event.result.content}")
                     yield format_sse_data(
                         event="tool_result",
                         data={

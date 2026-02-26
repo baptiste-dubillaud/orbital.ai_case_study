@@ -60,13 +60,16 @@ function ReasoningItemView({
  * Reasoning stack content
  * ──────────────────────────────────────────────── */
 
-function ReasoningStackContent({ items }: { items: ReasoningItem[] }) {
+function ReasoningStackContent({ items, callingTool }: { items: ReasoningItem[]; callingTool?: boolean }) {
   return (
     <div className={styles.stack}>
       {items.map((item, i) => {
         const isLast = i === items.length - 1;
         return <ReasoningItemView key={i} item={item} defaultOpen={isLast} />;
       })}
+      {callingTool && (
+        <div className={styles.callingTool}>Calling tool…</div>
+      )}
     </div>
   );
 }
@@ -84,9 +87,11 @@ function ReasoningStackContent({ items }: { items: ReasoningItem[] }) {
 export default function ReasoningStack({
   items,
   expanded,
+  callingTool,
 }: {
   items: ReasoningItem[];
   expanded: boolean;
+  callingTool?: boolean;
 }) {
   const [open, setOpen] = useState(expanded);
 
@@ -143,7 +148,7 @@ export default function ReasoningStack({
             transition={{ duration: 0.25, ease: "easeInOut" }}
             style={{ overflow: "hidden" }}
           >
-            <ReasoningStackContent items={items} />
+            <ReasoningStackContent items={items} callingTool={callingTool} />
           </motion.div>
         )}
       </AnimatePresence>

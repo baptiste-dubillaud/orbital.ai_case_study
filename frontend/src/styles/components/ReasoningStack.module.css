@@ -130,3 +130,17 @@
   max-height: 200px;
   overflow-y: auto;
 }
+
+/* ── Calling tool indicator ── */
+.callingTool {
+  color: #81c995;
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 2px 0;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
