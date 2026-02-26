@@ -21,6 +21,7 @@ interface ChatContextValue {
   isLoading: boolean;
   streamingContent: string;
   liveReasoning: ReasoningItem[];
+  livePlotFiles: string[];
 
   /* ── Input ── */
   input: string;
@@ -87,6 +88,11 @@ function mergeToolResult(
   });
 }
 
+function extractPlotFile(result: string): string | null {
+  const match = result.match(/Saved to:\s*output\/(.+\.html)/);
+  return match ? match[1] : null;
+}
+
 export function ChatProvider({ children }: { children: ReactNode }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [datasets, setDatasets] = useState<DatasetInfo[]>([]);
@@ -94,9 +100,11 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [streamingContent, setStreamingContent] = useState("");
   const [liveReasoning, setLiveReasoning] = useState<ReasoningItem[]>([]);
+  const [livePlotFiles, setLivePlotFiles] = useState<string[]>([]);
 
   const contentRef = useRef("");
   const reasoningRef = useRef<ReasoningItem[]>([]);
+  const plotFilesRef = useRef<string[]>([]);
   const abortRef = useRef<AbortController | null>(null);
 
   // Fetch dataset info on mount
@@ -123,9 +131,11 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     setStreamingContent("");
     setLiveReasoning([]);
+    setLivePlotFiles([]);
 
     contentRef.current = "";
     reasoningRef.current = [];
+    plotFilesRef.current = [];
 
     const controller = new AbortController();
     abortRef.current = controller;
@@ -161,6 +171,11 @@ export function ChatProvider({ children }: { children: ReactNode }) {
               result
             );
             setLiveReasoning([...reasoningRef.current]);
+            const plotFile = extractPlotFile(result);
+            if (plotFile) {
+              plotFilesRef.current = [...plotFilesRef.current, plotFile];
+              setLivePlotFiles([...plotFilesRef.current]);
+            }
           },
           onContent: (chunk) => {
             contentRef.current += chunk;
@@ -183,6 +198,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         if (reasoningRef.current.length > 0) {
           assistantMsg.reasoning = reasoningRef.current;
         }
+        if (plotFilesRef.current.length > 0) {
+          assistantMsg.plotFiles = plotFilesRef.current;
+        }
         setMessages((prev) => [...prev, assistantMsg]);
       }
     } catch {
@@ -197,6 +215,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
       setStreamingContent("");
       setLiveReasoning([]);
+      setLivePlotFiles([]);
       abortRef.current = null;
     }
   }, [input, isLoading, messages]);
@@ -209,6 +228,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         isLoading,
         streamingContent,
         liveReasoning,
+        livePlotFiles,
         input,
         setInput,
         handleSend,

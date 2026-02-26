@@ -8,13 +8,13 @@ import ChatInput from "./ChatInput";
 import styles from "@/styles/components/ChatLayout.module.css";
 
 export default function ChatLayout() {
-  const { messages, hasMessages, streamingContent, liveReasoning } =
+  const { messages, hasMessages, streamingContent, liveReasoning, livePlotFiles } =
     useChatContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, streamingContent, liveReasoning]);
+  }, [messages, streamingContent, liveReasoning, livePlotFiles]);
 
   return (
     <div className={styles.container}>

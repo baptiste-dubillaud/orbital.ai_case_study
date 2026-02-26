@@ -2,7 +2,7 @@ import { ChatMessagesRequest, DatasetInfo, StreamCallbacks, ToolCall } from "./t
 
 // Use the backend URL directly to avoid Next.js rewrite proxy
 // which buffers SSE responses instead of streaming them.
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
+export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 export async function fetchDatasets(): Promise<DatasetInfo[]> {
   const res = await fetch(`${API_BASE}/api/v1/data`);

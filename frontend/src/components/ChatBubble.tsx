@@ -6,6 +6,7 @@ import { ChatMessage } from "@/lib/types";
 import { useChatContext } from "@/context/ChatContext";
 import MarkdownRenderer from "./MarkdownRenderer";
 import ReasoningStack from "./ReasoningStack";
+import PlotViewer from "./PlotViewer";
 import styles from "@/styles/components/ChatBubble.module.css";
 
 interface ChatBubbleProps {
@@ -17,6 +18,8 @@ function ChatBubble({ message, index }: ChatBubbleProps) {
   const isUser = message.role === "user";
   const hasReasoning =
     !isUser && message.reasoning && message.reasoning.length > 0;
+  const hasPlots =
+    !isUser && message.plotFiles && message.plotFiles.length > 0;
 
   return (
     <>
@@ -35,6 +38,7 @@ function ChatBubble({ message, index }: ChatBubbleProps) {
           <MarkdownRenderer content={message.content} />
         )}
       </motion.div>
+      {hasPlots && <PlotViewer files={message.plotFiles!} />}
     </>
   );
 }
@@ -46,7 +50,7 @@ export default memo(ChatBubble);
 const STALE_THINKING_MS = 500;
 
 export function LiveChatBubble() {
-  const { isLoading, streamingContent, liveReasoning } = useChatContext();
+  const { isLoading, streamingContent, liveReasoning, livePlotFiles } = useChatContext();
   const [stale, setStale] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -112,6 +116,8 @@ export function LiveChatBubble() {
           </div>
         )
       )}
+
+      {livePlotFiles.length > 0 && <PlotViewer files={livePlotFiles} />}
     </>
   );
 }

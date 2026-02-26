@@ -16,6 +16,7 @@ export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   reasoning?: ReasoningItem[];
+  plotFiles?: string[];
 }
 
 export interface ToolCall {
