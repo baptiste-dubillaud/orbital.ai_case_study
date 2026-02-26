@@ -21,6 +21,7 @@ from pydantic_ai.messages import (
 from agent.agent import get_agent
 from agent.context import AgentContext
 from data.loader import get_datasets, get_dataset_info_str
+from config.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +35,10 @@ class MessagePayload(BaseModel):
 
 class ChatRequest(BaseModel):
     messages: list[MessagePayload]
+
+
+class SummarizeRequest(BaseModel):
+    message: str
 
 
 def format_sse(event: str, content: str | dict) -> str:
@@ -136,3 +141,20 @@ async def chat(request: ChatRequest):
             "X-Accel-Buffering": "no",
         },
     )
+
+
+@router.post("/summarize")
+async def summarize(request: SummarizeRequest):
+    """Generate a short conversation title from the first user message."""
+    from pydantic_ai import Agent
+
+    summarizer = Agent(
+        model=settings.llm_model,
+        system_prompt=(
+            "You generate very short titles (maximum 5 words) that summarize a user message. "
+            "Reply ONLY with the title. No quotes, no punctuation at the end, no explanation."
+        ),
+    )
+    result = await summarizer.run(request.message)
+    title = result.output.strip().strip('"').strip("'")
+    return {"title": title}

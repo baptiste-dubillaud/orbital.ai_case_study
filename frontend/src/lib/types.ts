@@ -19,6 +19,15 @@ export interface ChatMessage {
   plotFiles?: string[];
 }
 
+/* ── Conversation history ── */
+export interface Conversation {
+  id: string;
+  title?: string;
+  messages: ChatMessage[];
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface ToolCall {
   toolCallId: string;
   toolName: string;

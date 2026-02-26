@@ -1,7 +1,19 @@
 import { ChatMessagesRequest, DatasetInfo, StreamCallbacks, ToolCall } from "./types";
 
+export async function summarizeMessage(message: string): Promise<string> {
+  const res = await fetch(`${API_BASE}/api/v1/llm/summarize`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message }),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = await res.json();
+  return json.title as string;
+}
+
 // Use the backend URL directly to avoid Next.js rewrite proxy
 // which buffers SSE responses instead of streaming them.
+// Use the backend URL directly to avoid Next.js rewrite proxy buffering SSE.
 export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 export async function fetchDatasets(): Promise<DatasetInfo[]> {

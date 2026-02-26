@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useChatContext } from "@/context/ChatContext";
 import ChatBubble, { LiveChatBubble } from "./ChatBubble";
 import ChatInput from "./ChatInput";
+import Sidebar from "./Sidebar";
 import styles from "@/styles/components/ChatLayout.module.css";
 
 export default function ChatLayout() {
@@ -17,31 +18,35 @@ export default function ChatLayout() {
   }, [messages, streamingContent, liveReasoning, livePlotFiles]);
 
   return (
-    <div className={styles.container}>
-      {/* Messages area */}
-      <AnimatePresence>
-        {hasMessages && (
-          <motion.div
-            className={styles.messagesArea}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-          >
-            <div className={styles.messagesList}>
-              {messages.map((msg, i) => (
-                <ChatBubble key={i} message={msg} index={i} />
-              ))}
+    <div className={styles.outerWrapper}>
+      <Sidebar />
 
-              <LiveChatBubble />
+      <div className={styles.container}>
+        {/* Messages area */}
+        <AnimatePresence>
+          {hasMessages && (
+            <motion.div
+              className={styles.messagesArea}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className={styles.messagesList}>
+                {messages.map((msg, i) => (
+                  <ChatBubble key={i} message={msg} index={i} />
+                ))}
 
-              <div ref={messagesEndRef} />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                <LiveChatBubble />
 
-      {/* Input */}
-      <ChatInput />
+                <div ref={messagesEndRef} />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Input */}
+        <ChatInput />
+      </div>
     </div>
   );
 }

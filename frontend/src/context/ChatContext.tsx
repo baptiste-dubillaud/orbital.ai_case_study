@@ -9,8 +9,15 @@ import {
   useEffect,
   ReactNode,
 } from "react";
-import { streamMessage, fetchDatasets } from "@/lib/api";
-import { ChatMessage, DatasetInfo, ReasoningItem, ToolCall } from "@/lib/types";
+import { streamMessage, fetchDatasets, summarizeMessage } from "@/lib/api";
+import { ChatMessage, Conversation, DatasetInfo, ReasoningItem, ToolCall } from "@/lib/types";
+import {
+  getAllConversations,
+  getConversation,
+  saveMessages,
+  deleteConversation,
+  renameConversation,
+} from "@/lib/storage";
 
 interface ChatContextValue {
   /* ── Data ── */
@@ -30,6 +37,13 @@ interface ChatContextValue {
 
   /* ── Derived ── */
   hasMessages: boolean;
+
+  /* ── Conversation history ── */
+  conversations: Conversation[];
+  activeConversationId: string;
+  switchConversation: (id: string) => void;
+  startNewChat: () => void;
+  removeConversation: (id: string) => void;
 }
 
 const ChatContext = createContext<ChatContextValue | null>(null);
@@ -38,6 +52,10 @@ export function useChatContext() {
   const ctx = useContext(ChatContext);
   if (!ctx) throw new Error("useChatContext must be used within ChatProvider");
   return ctx;
+}
+
+function generateId(): string {
+  return `chat-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
 /* ── Helpers to build the reasoning array immutably ── */
@@ -94,6 +112,10 @@ function extractPlotFile(result: string): string | null {
 }
 
 export function ChatProvider({ children }: { children: ReactNode }) {
+  /* ── Conversation-level state ── */
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [activeConversationId, setActiveConversationId] = useState<string>("");
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [datasets, setDatasets] = useState<DatasetInfo[]>([]);
   const [input, setInput] = useState("");
@@ -106,6 +128,23 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const reasoningRef = useRef<ReasoningItem[]>([]);
   const plotFilesRef = useRef<string[]>([]);
   const abortRef = useRef<AbortController | null>(null);
+  const activeIdRef = useRef(activeConversationId);
+  activeIdRef.current = activeConversationId;
+
+  // Bootstrap: load conversations from localStorage on mount
+  useEffect(() => {
+    const all = getAllConversations();
+    if (all.length > 0) {
+      setConversations(all);
+      const first = all[0];
+      setActiveConversationId(first.id);
+      setMessages(first.messages);
+    } else {
+      const id = generateId();
+      setActiveConversationId(id);
+      setMessages([]);
+    }
+  }, []);
 
   // Fetch dataset info on mount
   useEffect(() => {
@@ -114,15 +153,76 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       .catch(() => setDatasets([]));
   }, []);
 
+  // Persist messages whenever they change (and we have an active conversation)
+  useEffect(() => {
+    if (!activeConversationId || messages.length === 0) return;
+    saveMessages(activeConversationId, messages);
+    setConversations(getAllConversations());
+  }, [messages, activeConversationId]);
+
   const hasMessages =
     messages.length > 0 ||
     !!streamingContent ||
     liveReasoning.length > 0;
 
+  /* ── Conversation management ── */
+  const switchConversation = useCallback(
+    (id: string) => {
+      if (id === activeConversationId || isLoading) return;
+      const conv = getConversation(id);
+      if (!conv) return;
+      setActiveConversationId(id);
+      setMessages(conv.messages);
+      setInput("");
+      setStreamingContent("");
+      setLiveReasoning([]);
+      setLivePlotFiles([]);
+    },
+    [activeConversationId, isLoading]
+  );
+
+  const startNewChat = useCallback(() => {
+    if (isLoading) return;
+    const id = generateId();
+    setActiveConversationId(id);
+    setMessages([]);
+    setInput("");
+    setStreamingContent("");
+    setLiveReasoning([]);
+    setLivePlotFiles([]);
+  }, [isLoading]);
+
+  const removeConversation = useCallback(
+    (id: string) => {
+      if (isLoading) return;
+      deleteConversation(id);
+      const remaining = getAllConversations();
+      if (remaining.length === 0) {
+        const newId = generateId();
+        setActiveConversationId(newId);
+        setConversations([]);
+        setMessages([]);
+      } else {
+        setConversations(remaining);
+        if (id === activeConversationId) {
+          const next = remaining[0];
+          setActiveConversationId(next.id);
+          setMessages(next.messages);
+        }
+      }
+      setInput("");
+      setStreamingContent("");
+      setLiveReasoning([]);
+      setLivePlotFiles([]);
+    },
+    [activeConversationId, isLoading]
+  );
+
   const handleSend = useCallback(async (message?: string) => {
     const trimmed = (message ?? input).trim();
     if (!trimmed || isLoading) return;
 
+    const isFirstMessage = messages.length === 0;
     const userMessage: ChatMessage = { role: "user", content: trimmed };
     const updatedMessages = [...messages, userMessage];
 
@@ -203,6 +303,17 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         }
         setMessages((prev) => [...prev, assistantMsg]);
       }
+
+      // Auto-rename conversation on first message
+      if (isFirstMessage) {
+        try {
+          const title = await summarizeMessage(trimmed);
+          renameConversation(activeIdRef.current, title);
+          setConversations(getAllConversations());
+        } catch {
+          // Silently ignore summarization errors
+        }
+      }
     } catch {
       setMessages((prev) => [
         ...prev,
@@ -233,6 +344,11 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         setInput,
         handleSend,
         hasMessages,
+        conversations,
+        activeConversationId,
+        switchConversation,
+        startNewChat,
+        removeConversation,
       }}
     >
       {children}
