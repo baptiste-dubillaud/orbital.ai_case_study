@@ -9,8 +9,10 @@ from pydantic_ai.messages import (
     ModelRequest,
     ModelResponse,
     UserPromptPart,
+    ThinkingPart,
     ThinkingPartDelta,
     TextPartDelta,
+    PartStartEvent,
     PartDeltaEvent,
     FunctionToolCallEvent,
     FunctionToolResultEvent,
@@ -92,8 +94,18 @@ async def generate_stream(request: ChatRequest) -> AsyncGenerator[str, None]:
             message_history=history if history else None,
         ):
             
+            # Text part start (first chunk)
+            if isinstance(event, PartStartEvent) and isinstance(event.part, TextPart):
+                if event.part.content:
+                    yield format_sse(event="content", content=event.part.content)
+
+            # Thinking part start (first chunk)
+            elif isinstance(event, PartStartEvent) and isinstance(event.part, ThinkingPart):
+                if event.part.content:
+                    yield format_sse(event="thinking", content=event.part.content)
+
             # Text content delta
-            if isinstance(event, PartDeltaEvent) and isinstance(event.delta, TextPartDelta):
+            elif isinstance(event, PartDeltaEvent) and isinstance(event.delta, TextPartDelta):
                 yield format_sse(event="content", content=event.delta.content_delta)
 
             # Thinking delta
