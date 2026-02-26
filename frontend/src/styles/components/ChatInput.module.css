@@ -1,4 +1,4 @@
-/* ── Title ── */
+/* Title */
 .title {
   font-size: 1.6rem;
   font-weight: 600;
@@ -7,7 +7,7 @@
   margin-bottom: 20px;
 }
 
-/* ── Input wrapper ── */
+/* Input wrapper */
 .wrapper {
   width: 100%;
   padding: 16px 0 24px;

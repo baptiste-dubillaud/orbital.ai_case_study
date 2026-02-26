@@ -1,4 +1,4 @@
-/* ── Dataset info ── */
+/* Dataset info */
 export interface DatasetInfo {
   name: string;
   rows: number;
@@ -6,7 +6,7 @@ export interface DatasetInfo {
   column_names: string[];
 }
 
-/* ── Reasoning items ── */
+/* Reasoning items */
 export type ReasoningItem =
   | { type: "thinking"; content: string }
   | { type: "tool_call"; toolCall: ToolCall };
@@ -19,7 +19,7 @@ export interface ChatMessage {
   plotFiles?: string[];
 }
 
-/* ── Conversation history ── */
+/* Conversation history */
 export interface Conversation {
   id: string;
   title?: string;

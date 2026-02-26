@@ -28,15 +28,11 @@ async def query_data(
         ctx.deps.current_dataframe = result_df
 
         preview = result_df.head(5).to_string(index=False)
-        summary = (
+        return (
             f"Query executed successfully.\n"
             f"Result: {result_df.shape[0]} rows x {result_df.shape[1]} columns\n"
             f"Columns: {', '.join(result_df.columns.tolist())}\n"
             f"Preview:\n{preview}"
         )
-
-        return summary
-
     except Exception as e:
-        error_msg = f"Error executing SQL query: {e}"
-        return error_msg
+        return f"Error executing SQL: {e}"

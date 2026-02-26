@@ -5,9 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ReasoningItem } from "@/lib/types";
 import styles from "@/styles/components/ReasoningStack.module.css";
 
-/* ────────────────────────────────────────────────
- * Single reasoning item renderer
- * ──────────────────────────────────────────────── */
+
+// Single reasoning item renderer
 
 function ReasoningItemView({
   item,
@@ -56,9 +55,9 @@ function ReasoningItemView({
   );
 }
 
-/* ────────────────────────────────────────────────
+/* 
  * Reasoning stack content
- * ──────────────────────────────────────────────── */
+ */
 
 function ReasoningStackContent({ items, callingTool }: { items: ReasoningItem[]; callingTool?: boolean }) {
   return (
@@ -74,7 +73,7 @@ function ReasoningStackContent({ items, callingTool }: { items: ReasoningItem[];
   );
 }
 
-/* ────────────────────────────────────────────────
+/* 
  * Unified ReasoningStack
  *
  *  expanded = true  → stack visible (live streaming)
@@ -82,7 +81,7 @@ function ReasoningStackContent({ items, callingTool }: { items: ReasoningItem[];
  *
  * When `expanded` transitions from true → false the
  * section auto-collapses.
- * ──────────────────────────────────────────────── */
+ */
 
 export default function ReasoningStack({
   items,

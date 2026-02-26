@@ -1,4 +1,4 @@
-/* ── Collapsed reasoning section (finalized messages) ── */
+/* Collapsed reasoning section (finalized messages) */
 .section {
   margin-bottom: 10px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
@@ -37,7 +37,7 @@
   font-weight: 500;
 }
 
-/* ── Shared reasoning stack (live + finalized) ── */
+/* Shared reasoning stack (live + finalized) */
 .stack {
   align-self: flex-start;
   max-width: 80%;
@@ -64,7 +64,7 @@
   color: #888;
 }
 
-/* ── Tool call block ── */
+/* Tool call block */
 .toolEvent {
   padding-left: 2px;
   color: #999;
@@ -131,7 +131,7 @@
   overflow-y: auto;
 }
 
-/* ── Calling tool indicator ── */
+/* Calling tool indicator */
 .callingTool {
   color: #81c995;
   font-size: 0.82rem;

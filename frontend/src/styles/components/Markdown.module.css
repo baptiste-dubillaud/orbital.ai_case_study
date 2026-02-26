@@ -6,7 +6,7 @@
   overflow-wrap: break-word;
 }
 
-/* ── Paragraphs ── */
+/* Paragraphs */
 .markdown p {
   margin: 0 0 0.75em;
 }
@@ -15,7 +15,7 @@
   margin-bottom: 0;
 }
 
-/* ── Headings ── */
+/* Headings */
 .markdown h1, .markdown h2, .markdown h3,
 .markdown h4, .markdown h5, .markdown h6 {
   color: #e0e0e0;
@@ -34,7 +34,7 @@
   margin-top: 0;
 }
 
-/* ── Lists ── */
+/* Lists */
 .markdown ul, .markdown ol {
   margin: 0.5em 0;
   padding-left: 1.5em;
@@ -48,7 +48,7 @@
   margin: 0;
 }
 
-/* ── Inline code ── */
+/* Inline code */
 .inlineCode {
   background: #2a2a2a;
   color: #e8b4b8;
@@ -58,7 +58,7 @@
   font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, monospace;
 }
 
-/* ── Code blocks ── */
+/* Code blocks */
 .codeBlockWrapper {
   position: relative;
   margin: 0.75em 0;
@@ -95,7 +95,7 @@
   color: inherit;
 }
 
-/* ── Blockquote ── */
+/* Blockquote */
 .markdown blockquote {
   border-left: 3px solid #444;
   margin: 0.75em 0;
@@ -107,14 +107,14 @@
   margin: 0;
 }
 
-/* ── Horizontal rule ── */
+/* Horizontal rule */
 .markdown hr {
   border: none;
   border-top: 1px solid #333;
   margin: 1em 0;
 }
 
-/* ── Links ── */
+/* Links */
 .markdown a {
   color: #6dade0;
   text-decoration: none;
@@ -124,7 +124,7 @@
   text-decoration: underline;
 }
 
-/* ── Strong / Em ── */
+/* Strong / Em */
 .markdown strong {
   color: #e0e0e0;
   font-weight: 600;
@@ -134,7 +134,7 @@
   font-style: italic;
 }
 
-/* ── Tables ── */
+/* Tables */
 .tableWrapper {
   overflow-x: auto;
   margin: 0.75em 0;
@@ -163,7 +163,7 @@
   background: rgba(255, 255, 255, 0.02);
 }
 
-/* ── Images ── */
+/* Images */
 .markdown img {
   max-width: 100%;
   border-radius: 8px;

@@ -1,4 +1,4 @@
-/* ── Sidebar ── */
+/* Sidebar */
 .sidebar {
   width: 280px;
   min-width: 280px;
@@ -11,7 +11,7 @@
   height: 100vh;
 }
 
-/* ── New chat button ── */
+/* New chat button */
 .newChatBtn {
   display: flex;
   align-items: center;
@@ -39,7 +39,7 @@
   line-height: 1;
 }
 
-/* ── List ── */
+/* List */
 .list {
   flex: 1;
   overflow-y: auto;
@@ -57,7 +57,7 @@
   border-radius: 2px;
 }
 
-/* ── Item ── */
+/* Item */
 .item {
   display: flex;
   align-items: center;
@@ -90,7 +90,7 @@
   color: #e0e0e0;
 }
 
-/* ── Delete button ── */
+/* Delete button */
 .deleteBtn {
   flex-shrink: 0;
   background: none;

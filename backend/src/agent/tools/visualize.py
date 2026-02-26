@@ -1,5 +1,5 @@
-import os
 import re
+from pathlib import Path
 from typing import Literal
 
 import pandas as pd
@@ -8,6 +8,8 @@ import plotly.graph_objects as go
 from pydantic_ai import RunContext
 
 from agent.context import AgentContext
+
+OUTPUT_DIR = Path("output")
 
 
 async def visualize(
@@ -33,52 +35,39 @@ async def visualize(
         return "Error: No data available. Call query_data first."
 
     df = ctx.deps.current_dataframe
+    namespace = {"df": df.copy(), "pd": pd, "px": px, "go": go}
 
     try:
-        namespace = {
-            "df": df.copy(),
-            "pd": pd,
-            "px": px,
-            "go": go,
-        }
         exec(code, namespace)
-
-        safe_title = re.sub(r"[^\w\s-]", "", title).strip().replace(" ", "_").lower()
-        os.makedirs("output", exist_ok=True)
-
-        if result_type == "figure":
-            fig = namespace.get("fig")
-            if fig is None:
-                return "Error: Code must create a 'fig' variable (plotly Figure)."
-
-            filepath = f"output/{safe_title}.html"
-            fig.write_html(filepath)
-
-            result_str = (
-                f"Figure created: {title}\n"
-                f"Saved to: {filepath}\n"
-                f"Type: {type(fig).__name__}\n"
-                f"Traces: {len(fig.data)}"
-            )
-
-        elif result_type == "table":
-            result = namespace.get("result", df)
-
-            filepath = f"output/{safe_title}.csv"
-            result.to_csv(filepath, index=False)
-
-            result_str = (
-                f"Table created: {title}\n"
-                f"Saved to: {filepath}\n"
-                f"Shape: {result.shape[0]} rows x {result.shape[1]} columns\n"
-                f"Preview:\n{result.head(10).to_string(index=False)}"
-            )
-
-        else:
-            result_str = f"Error: Unknown result_type '{result_type}'. Use 'figure' or 'table'."
-
-        return result_str
-
     except Exception as e:
-        error_msg = f"Error creating visualization: {e}"
-        return error_msg
+        return f"Code execution error: {e}"
+
+    safe_title = re.sub(r"[^\w\s-]", "", title).strip().replace(" ", "_").lower()
+    OUTPUT_DIR.mkdir(exist_ok=True)
+
+    if result_type == "figure":
+        fig = namespace.get("fig")
+        if fig is None:
+            return "Error: Code must create a 'fig' variable (plotly Figure)."
+
+        path = OUTPUT_DIR / f"{safe_title}.html"
+        fig.write_html(str(path))
+        return (
+            f"Figure created: {title}\n"
+            f"Saved to: {path}\n"
+            f"Type: {type(fig).__name__}\n"
+            f"Traces: {len(fig.data)}"
+        )
+
+    if result_type == "table":
+        result = namespace.get("result", df)
+        path = OUTPUT_DIR / f"{safe_title}.csv"
+        result.to_csv(str(path), index=False)
+        return (
+            f"Table created: {title}\n"
+            f"Saved to: {path}\n"
+            f"Shape: {result.shape[0]} rows x {result.shape[1]} columns\n"
+            f"Preview:\n{result.head(10).to_string(index=False)}"
+        )
+
+    return f"Error: Unknown result_type '{result_type}'. Use 'figure' or 'table'."

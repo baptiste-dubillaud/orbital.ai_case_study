@@ -1,4 +1,4 @@
-/* ── Outer wrapper (sidebar + main) ── */
+/* Outer wrapper (sidebar + main) */
 .outerWrapper {
   display: flex;
   height: 100vh;
@@ -17,7 +17,7 @@
   padding: 0 16px;
 }
 
-/* ── Messages area ── */
+/* Messages area */
 .messagesArea {
   flex: 1;
   overflow-y: auto;
@@ -30,7 +30,7 @@
   gap: 12px;
 }
 
-/* ── Scrollbar ── */
+/* Scrollbar */
 .messagesArea::-webkit-scrollbar {
   width: 6px;
 }

@@ -1,14 +1,13 @@
-from contextlib import asynccontextmanager
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-
 import logging
 import sys
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from config.config import settings
 from api.v1 import router as v1_router
 
-# Force logging config — must use force=True because uvicorn configures the root logger first
+# Override uvicorn's root logger so our level/format takes effect
 logging.basicConfig(
     level=settings.log_level.upper(),
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
@@ -16,26 +15,17 @@ logging.basicConfig(
     force=True,
 )
 
-# Quiet noisy HTTP-level loggers
-logging.getLogger("httpcore").setLevel(logging.WARNING)
-logging.getLogger("httpx").setLevel(logging.WARNING)
+log = logging.getLogger(__name__)
 
-logger = logging.getLogger(__name__)
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup #
-    logger.info("Starting API...")
-
-    logger.debug("Loading datasets...")
-
-    yield
-
-    # Shutdown #
-    logger.info("Shutting down API...")
+for noisy in ['httpcore', 'httpx']:
+    logging.getLogger(noisy).setLevel(logging.WARNING)
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    title="Data Analysis API",
+    description="Chat with an LLM agent that queries CSV datasets and builds visualizations.",
+    version="1.0.0",
+)
 
 app.add_middleware(
     CORSMiddleware,

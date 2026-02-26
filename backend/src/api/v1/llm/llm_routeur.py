@@ -1,151 +1,50 @@
-import json
 import logging
-from typing import AsyncGenerator
 
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
-from pydantic_ai.messages import (
-    ModelRequest,
-    ModelResponse,
-    UserPromptPart,
-    ThinkingPart,
-    ThinkingPartDelta,
-    TextPartDelta,
-    PartStartEvent,
-    PartDeltaEvent,
-    FunctionToolCallEvent,
-    FunctionToolResultEvent,
-    ToolReturnPart,
-    TextPart,
-)
+from pydantic_ai import Agent
 
-from agent.agent import get_agent
-from agent.context import AgentContext
-from data.loader import get_datasets, get_dataset_info_str
+from api.models import ChatRequest, SummarizeRequest, SummarizeResponse
+from services.streaming import stream_chat
 from config.config import settings
 
-logger = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/llm", tags=["llm"])
-
-
-class MessagePayload(BaseModel):
-    role: str
-    content: str
+router = APIRouter(prefix="/llm", tags=["LLM"])
 
 
-class ChatRequest(BaseModel):
-    messages: list[MessagePayload]
+# ── Summarizer (reused across requests) ─────────────────────────────
+
+_summarizer = Agent(
+    model=settings.llm_model,
+    system_prompt=(
+        "You generate very short titles (maximum 5 words) that summarize a user message. "
+        "Reply ONLY with the title. No quotes, no punctuation at the end, no explanation."
+    ),
+)
 
 
-class SummarizeRequest(BaseModel):
-    message: str
+# ── Routes ──────────────────────────────────────────────────────────
 
 
-def format_sse(event: str, content: str | dict) -> str:
-    """Format a Server-Sent Event string with a text content payload."""
-    payload = json.dumps({"content": content})
-    return f"event: {event}\ndata: {payload}\n\n"
-
-
-def format_sse_data(event: str, data: dict) -> str:
-    """Format a Server-Sent Event string with an arbitrary JSON payload."""
-    return f"event: {event}\ndata: {json.dumps(data)}\n\n"
-
-
-def build_message_history(messages: list[MessagePayload]):
-    """Convert frontend messages to pydantic-ai ModelMessage objects."""
-    history = []
-    for msg in messages:
-        if msg.role == "user":
-            history.append(ModelRequest(parts=[UserPromptPart(content=msg.content)]))
-        elif msg.role == "assistant":
-            history.append(ModelResponse(parts=[TextPart(content=msg.content)]))
-    return history
-
-async def generate_stream(request: ChatRequest) -> AsyncGenerator[str, None]:
-    """
-    Run the agent and yield SSE events in real-time.
-
-    A background task runs `stream_text()`.  Intermediate tool events are
-    pushed onto an asyncio.Queue by the tools themselves and consumed here
-    so the client sees them the moment they happen — not after the whole
-    agentic loop finishes.
-    """
-    agent = get_agent()
-    datasets = get_datasets()
-    dataset_info = get_dataset_info_str()
-
-    ctx = AgentContext(
-        datasets=datasets,
-        dataset_info=dataset_info,
-    )
-
-    history = build_message_history(request.messages[:-1])
-    user_prompt = request.messages[-1].content
-
-    logger.info(f"Received chat request with prompt: {user_prompt} and history of {len(history)} messages")
-
-    try:
-        async for event in agent.run_stream_events(
-            user_prompt,
-            deps=ctx,
-            message_history=history if history else None,
-        ):
-            
-            # Text part start (first chunk)
-            if isinstance(event, PartStartEvent) and isinstance(event.part, TextPart):
-                if event.part.content:
-                    yield format_sse(event="content", content=event.part.content)
-
-            # Thinking part start (first chunk)
-            elif isinstance(event, PartStartEvent) and isinstance(event.part, ThinkingPart):
-                if event.part.content:
-                    yield format_sse(event="thinking", content=event.part.content)
-
-            # Text content delta
-            elif isinstance(event, PartDeltaEvent) and isinstance(event.delta, TextPartDelta):
-                yield format_sse(event="content", content=event.delta.content_delta)
-
-            # Thinking delta
-            elif isinstance(event, PartDeltaEvent) and isinstance(event.delta, ThinkingPartDelta):
-                yield format_sse(event="thinking", content=event.delta.content_delta)
-
-            # Tool call fired (right before execution)
-            elif isinstance(event, FunctionToolCallEvent):
-                yield format_sse_data(
-                    event="tool_call",
-                    data={
-                        "tool_name": event.part.tool_name,
-                        "args": event.part.args,
-                        "tool_call_id": event.part.tool_call_id,
-                    },
-                )
-
-            # Tool result returned
-            elif isinstance(event, FunctionToolResultEvent):
-                if isinstance(event.result, ToolReturnPart):
-                    yield format_sse_data(
-                        event="tool_result",
-                        data={
-                            "result": event.result.content,
-                            "tool_call_id": event.tool_call_id,
-                        },
-                    )
-    
-    except Exception as e:
-        logger.error(f"Streaming error: {e}", exc_info=True)
-        yield format_sse(event="error", content=str(e))
-    finally:
-        yield "event: Done\ndata: {}\n\n"
-
-# Routes
-@router.post("/chat")
+@router.post(
+    "/chat",
+    summary="Chat (SSE stream)",
+    description=(
+        "Send a conversation and receive the agent's reply as a Server-Sent Event stream. "
+        "Events: `content`, `thinking`, `tool_call`, `tool_result`, `error`, `Done`."
+    ),
+    responses={
+        200: {
+            "content": {"text/event-stream": {}},
+            "description": "SSE stream of agent events.",
+        },
+    },
+)
 async def chat(request: ChatRequest):
-    """SSE streaming chat endpoint."""
+    """Stream agent responses as Server-Sent Events."""
     return StreamingResponse(
-        generate_stream(request),
+        stream_chat(request),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
@@ -155,18 +54,9 @@ async def chat(request: ChatRequest):
     )
 
 
-@router.post("/summarize")
-async def summarize(request: SummarizeRequest):
-    """Generate a short conversation title from the first user message."""
-    from pydantic_ai import Agent
-
-    summarizer = Agent(
-        model=settings.llm_model,
-        system_prompt=(
-            "You generate very short titles (maximum 5 words) that summarize a user message. "
-            "Reply ONLY with the title. No quotes, no punctuation at the end, no explanation."
-        ),
-    )
-    result = await summarizer.run(request.message)
+@router.post("/summarize", summary="Summarize a message into a short title", response_model=SummarizeResponse)
+async def summarize(request: SummarizeRequest) -> SummarizeResponse:
+    """Ask the LLM for a ≤5-word title for a conversation."""
+    result = await _summarizer.run(request.message)
     title = result.output.strip().strip('"').strip("'")
-    return {"title": title}
+    return SummarizeResponse(title=title)
