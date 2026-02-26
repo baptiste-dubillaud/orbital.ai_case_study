@@ -301,7 +301,14 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         if (plotFilesRef.current.length > 0) {
           assistantMsg.plotFiles = plotFilesRef.current;
         }
+        // Clear streaming state in the same synchronous block as appending
+        // the finalized message so React batches them into one render
+        // (prevents the response showing twice).
         setMessages((prev) => [...prev, assistantMsg]);
+        setIsLoading(false);
+        setStreamingContent("");
+        setLiveReasoning([]);
+        setLivePlotFiles([]);
       }
 
       // Auto-rename conversation on first message
@@ -323,6 +330,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         },
       ]);
     } finally {
+      // Ensure cleanup in case contentRef was empty or an error occurred
       setIsLoading(false);
       setStreamingContent("");
       setLiveReasoning([]);

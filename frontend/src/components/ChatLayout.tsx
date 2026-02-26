@@ -1,21 +1,49 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useChatContext } from "@/context/ChatContext";
-import ChatBubble, { LiveChatBubble } from "./ChatBubble";
+import ChatBubble from "./ChatBubble";
 import ChatInput from "./ChatInput";
 import Sidebar from "./Sidebar";
+import { ChatMessage } from "@/lib/types";
 import styles from "@/styles/components/ChatLayout.module.css";
 
 export default function ChatLayout() {
-  const { messages, hasMessages, streamingContent, liveReasoning, livePlotFiles } =
-    useChatContext();
+  const {
+    messages,
+    hasMessages,
+    isLoading,
+    streamingContent,
+    liveReasoning,
+    livePlotFiles,
+  } = useChatContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  /*
+   * During streaming, append a virtual assistant message built from live state.
+   * When streaming finishes, React batches the state updates (messages gains
+   * the real assistant message + isLoading becomes false) in a single render,
+   * so the ChatBubble at the same key just updates its props — no remount,
+   * no flash.
+   */
+  const displayMessages = useMemo<ChatMessage[]>(() => {
+    if (!isLoading) return messages;
+
+    const virtualMsg: ChatMessage = {
+      role: "assistant",
+      content: streamingContent,
+      ...(liveReasoning.length > 0 && { reasoning: liveReasoning }),
+      ...(livePlotFiles.length > 0 && { plotFiles: livePlotFiles }),
+    };
+    return [...messages, virtualMsg];
+  }, [messages, isLoading, streamingContent, liveReasoning, livePlotFiles]);
+
+  const streamingIndex = isLoading ? displayMessages.length - 1 : -1;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, streamingContent, liveReasoning, livePlotFiles]);
+  }, [displayMessages]);
 
   return (
     <div className={styles.outerWrapper}>
@@ -32,11 +60,14 @@ export default function ChatLayout() {
               transition={{ duration: 0.3 }}
             >
               <div className={styles.messagesList}>
-                {messages.map((msg, i) => (
-                  <ChatBubble key={i} message={msg} index={i} />
+                {displayMessages.map((msg, i) => (
+                  <ChatBubble
+                    key={i}
+                    message={msg}
+                    index={i}
+                    streaming={i === streamingIndex}
+                  />
                 ))}
-
-                <LiveChatBubble />
 
                 <div ref={messagesEndRef} />
               </div>
