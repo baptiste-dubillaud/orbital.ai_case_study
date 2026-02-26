@@ -18,48 +18,51 @@ L'agent est construit avec [PydanticAI](https://ai.pydantic.dev/).
 ## Architecture
 
 ```
-case_fullstack/
-├── backend/
-│   ├── src/
-│   │   ├── main.py                        # FastAPI app entrypoint
-│   │   ├── config/config.py               # Settings (env-based)
-│   │   ├── agent/
-│   │   │   ├── agent.py                   # PydanticAI agent creation
-│   │   │   ├── context.py                 # Context injected into tools
-│   │   │   ├── prompt.py                  # System prompt
-│   │   │   └── tools/
-│   │   │       ├── query_data.py          # SQL execution via DuckDB
-│   │   │       └── visualize.py           # Plotly visualizations
-│   │   ├── api/v1/
-│   │   │   ├── llm/llm_routeur.py         # SSE streaming chat endpoint
-│   │   │   └── data/data_routeur.py       # Dataset info endpoint
-│   │   └── data/loader.py                 # CSV loader (pandas DataFrames)
-│   ├── data/                              # CSV datasets
-│   ├── output/                            # Generated visualizations
-│   ├── Dockerfile
-│   └── requirements.txt
-├── frontend/
-│   ├── src/
-│   │   ├── app/
-│   │   │   ├── layout.tsx                 # Root layout
-│   │   │   └── page.tsx                   # Main page (ChatProvider + ChatLayout)
-│   │   ├── components/
-│   │   │   ├── ChatLayout.tsx             # Message list orchestrator
-│   │   │   ├── ChatInput.tsx              # Input area with landing state
-│   │   │   ├── ChatBubble.tsx             # Message bubbles + live bubble
-│   │   │   ├── ReasoningStack.tsx         # Thinking + tool call display
-│   │   │   ├── DatasetCards.tsx           # Dataset cards (landing page)
-│   │   │   └── MarkdownRenderer.tsx       # Markdown rendering
-│   │   ├── context/
-│   │   │   └── ChatContext.tsx            # All chat state management
-│   │   ├── lib/
-│   │   │   ├── api.ts                     # API layer (SSE + REST)
-│   │   │   └── types.ts                   # Shared TypeScript types
-│   │   └── styles/components/             # CSS Modules (mirrors components/)
-│   ├── Dockerfile
-│   └── package.json
-├── docker-compose.yml
-└── README.md
+backend/
+├── src/
+│   ├── main.py                    # FastAPI entrypoint
+│   ├── config/config.py           # Env-based settings
+│   ├── agent/
+│   │   ├── agent.py               # PydanticAI agent setup
+│   │   ├── context.py             # Dependency context for tools
+│   │   ├── prompt.py              # System prompt
+│   │   └── tools/
+│   │       ├── query_data.py      # SQL via DuckDB
+│   │       └── visualize.py       # Plotly chart generation
+│   ├── api/
+│   │   ├── models/
+│   │   │   ├── schemas.py         # Request/response Pydantic models
+│   │   │   └── streaming/sse.py   # SSE frame helpers
+│   │   └── v1/
+│   │       ├── llm/               # /chat (SSE) + /summarize
+│   │       ├── data/              # /data (dataset info)
+│   │       └── output/            # /output (serve generated files)
+│   ├── services/
+│   │   ├── streaming.py           # Agent streaming logic (SSE generator)
+│   │   └── history.py             # Message history conversion
+│   └── data/loader.py             # CSV loader (singleton)
+├── data/                          # CSV datasets (mounted volume)
+└── output/                        # Generated plots & tables
+
+frontend/
+├── src/
+│   ├── app/                       # Next.js App Router (layout + page)
+│   ├── components/
+│   │   ├── ChatLayout.tsx         # Message list orchestrator
+│   │   ├── ChatBubble.tsx         # Unified bubble (finalized + streaming)
+│   │   ├── ChatInput.tsx          # Input area
+│   │   ├── ReasoningStack.tsx     # Thinking + tool calls display
+│   │   ├── PlotViewer.tsx         # Plotly iframe viewer
+│   │   ├── Sidebar.tsx            # Conversation list
+│   │   ├── DatasetCards.tsx       # Landing page dataset cards
+│   │   └── MarkdownRenderer.tsx   # Markdown rendering
+│   ├── context/ChatContext.tsx    # Chat state & streaming management
+│   ├── lib/
+│   │   ├── api.ts                 # API layer (SSE + REST)
+│   │   ├── types.ts               # Shared TypeScript types
+│   │   └── storage.ts             # localStorage persistence
+│   └── styles/components/         # CSS Modules
+└── package.json
 ```
 
 ---
@@ -124,7 +127,7 @@ Le backend streame les événements suivants au frontend :
   - [x] Champ texte pour poser des questions
   - [x] Affichage **streaming** du thinking (collapsible/dépliable, animation 0.25s)
   - [x] Affichage des **tool calls** (nom de l'outil, arguments, résultat)
-  - [ ] Rendu des **visualisations Plotly** (graphiques interactifs)
+  - [x] Rendu des **visualisations Plotly** (graphiques interactifs)
   - [x] Rendu des **tableaux** de données
 - [ ] **Code propre** et structuré (Context, Components, Styles séparés)
 
