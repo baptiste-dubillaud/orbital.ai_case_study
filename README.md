@@ -2,52 +2,76 @@
 
 ## Contexte
 
-Tu reçois un **agent d'analyse de données** qui fonctionne en mode CLI (terminal).
+Un **agent d'analyse de données** transformé d'un CLI en application web complète.
 
 L'agent peut :
 
 - Répondre à des questions sur des données en générant du **SQL** (via DuckDB)
 - Créer des **visualisations** avec Plotly
-- Expliquer son **raisonnement** (balises `<thinking>`)
+- Expliquer son **raisonnement** (thinking) en temps réel
 - Enchaîner les étapes automatiquement via des **tool calls**
 
 L'agent est construit avec [PydanticAI](https://ai.pydantic.dev/).
 
 ---
 
-## Objectif
-
-**Transformer cet agent CLI en une application web complète.**
-
-L'utilisateur doit pouvoir poser des questions dans une interface web et voir en temps réel :
-
-1. Le **raisonnement** de l'agent (thinking) — affiché progressivement
-2. Les **appels d'outils** (tool calls) — nom, arguments, résultat
-3. Les **visualisations** Plotly / tableaux de données
-4. La **réponse finale** de l'agent
-
----
-
-## Ce qui est fourni
+## Architecture
 
 ```
 case_fullstack/
-├── agent/
-│   ├── agent.py              # Création de l'agent PydanticAI
-│   ├── context.py            # Contexte injecté dans les tools
-│   ├── prompt.py             # System prompt
-│   └── tools/
-│       ├── query_data.py     # Exécution SQL via DuckDB
-│       └── visualize.py      # Création de visualisations Plotly
-├── data/                     # Fichiers CSV (tes données de test)
-├── output/                   # Visualisations générées
-├── main.py                   # Script CLI de démonstration
-├── Dockerfile
+├── backend/
+│   ├── src/
+│   │   ├── main.py                        # FastAPI app entrypoint
+│   │   ├── config/config.py               # Settings (env-based)
+│   │   ├── agent/
+│   │   │   ├── agent.py                   # PydanticAI agent creation
+│   │   │   ├── context.py                 # Context injected into tools
+│   │   │   ├── prompt.py                  # System prompt
+│   │   │   └── tools/
+│   │   │       ├── query_data.py          # SQL execution via DuckDB
+│   │   │       └── visualize.py           # Plotly visualizations
+│   │   ├── api/v1/
+│   │   │   ├── llm/llm_routeur.py         # SSE streaming chat endpoint
+│   │   │   └── data/data_routeur.py       # Dataset info endpoint
+│   │   └── data/loader.py                 # CSV loader (pandas DataFrames)
+│   ├── data/                              # CSV datasets
+│   ├── output/                            # Generated visualizations
+│   ├── Dockerfile
+│   └── requirements.txt
+├── frontend/
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── layout.tsx                 # Root layout
+│   │   │   └── page.tsx                   # Main page (ChatProvider + ChatLayout)
+│   │   ├── components/
+│   │   │   ├── ChatLayout.tsx             # Message list orchestrator
+│   │   │   ├── ChatInput.tsx              # Input area with landing state
+│   │   │   ├── ChatBubble.tsx             # Message bubbles + live bubble
+│   │   │   ├── ReasoningStack.tsx         # Thinking + tool call display
+│   │   │   ├── DatasetCards.tsx           # Dataset cards (landing page)
+│   │   │   └── MarkdownRenderer.tsx       # Markdown rendering
+│   │   ├── context/
+│   │   │   └── ChatContext.tsx            # All chat state management
+│   │   ├── lib/
+│   │   │   ├── api.ts                     # API layer (SSE + REST)
+│   │   │   └── types.ts                   # Shared TypeScript types
+│   │   └── styles/components/             # CSS Modules (mirrors components/)
+│   ├── Dockerfile
+│   └── package.json
 ├── docker-compose.yml
-├── requirements.txt
-├── .env.example
 └── README.md
 ```
+
+---
+
+## Stack technique
+
+| Layer | Technology |
+|-------|-----------|
+| **Backend** | FastAPI, PydanticAI, DuckDB, Pandas, Plotly |
+| **Frontend** | Next.js (App Router), TypeScript, CSS Modules, Framer Motion |
+| **Streaming** | Server-Sent Events (SSE) |
+| **Infra** | Docker Compose |
 
 ---
 
@@ -56,44 +80,60 @@ case_fullstack/
 ```bash
 # 1. Configurer l'environnement
 cp .env.example .env
-# Vérifier surtout: LLM_BASE_URL, LLM_MODEL, LLM_API_KEY
+# Vérifier: LLM_BASE_URL, LLM_MODEL, LLM_API_KEY
 
 # 2. Lancer Ollama en local (host)
 ollama serve
 ollama pull qwen2.5:7b
 
-# 3. Ajouter des fichiers CSV dans data/
+# 3. Ajouter des fichiers CSV dans backend/data/
 
-# 4. Lancer le CLI via Docker
-docker compose run --rm agent
+# 4. Lancer l'application
+docker compose up --build
 ```
 
-> Le volume `data/` est monté dans le container — tu peux ajouter/modifier des CSV sans rebuild.
+Le frontend est accessible sur `http://localhost:3000`, le backend sur `http://localhost:8000`.
+
+> Le volume `data/` est monté dans le container — ajout/modification de CSV sans rebuild.
 > Les visualisations générées sont dans `output/`.
-> Sur macOS Docker Desktop, `host.docker.internal` permet au container d'appeler Ollama lancé sur ta machine.
+> Sur macOS Docker Desktop, `host.docker.internal` permet au container d'appeler Ollama.
 
 ---
 
-## Ce qui est attendu
+## SSE Event Flow
 
-### Minimum requis
+Le backend streame les événements suivants au frontend :
 
-- [ ] **Backend API** avec endpoint de streaming (SSE ou WebSocket)
-- [ ] **Frontend web** avec :
-  - [ ] Champ texte pour poser des questions
-  - [ ] Affichage **streaming** du thinking (collapsible/dépliable)
-  - [ ] Affichage des **tool calls** (nom de l'outil, arguments, résultat)
+| Event | Description |
+|-------|-------------|
+| `thinking` | Token de raisonnement du modèle (affiché en temps réel) |
+| `tool_call` | Appel d'outil avec nom, arguments, ID |
+| `tool_result` | Résultat de l'exécution de l'outil |
+| `content` | Token de réponse finale du modèle |
+| `Done` | Fin du stream |
+| `error` | Erreur pendant le streaming |
+
+---
+
+## Features
+
+### Checklist
+
+- [x] **Backend API** avec endpoint de streaming (SSE)
+- [x] **Frontend web** avec :
+  - [x] Champ texte pour poser des questions
+  - [x] Affichage **streaming** du thinking (collapsible/dépliable, animation 0.25s)
+  - [x] Affichage des **tool calls** (nom de l'outil, arguments, résultat)
   - [ ] Rendu des **visualisations Plotly** (graphiques interactifs)
-  - [ ] Rendu des **tableaux** de données
-- [ ] **Code propre** et structuré
+  - [x] Rendu des **tableaux** de données
+- [ ] **Code propre** et structuré (Context, Components, Styles séparés)
 
----
+### Bonus
 
-## Stack technique
-
-- **Backend** : FastAPI 
-- **Frontend** : Libre React
-- **Streaming** : SSE ou WebSocket (à ton choix)
+- [x] **Dataset cards** — les datasets disponibles sont affichés sur la page d'accueil, cliquer lance une conversation
+- [x] **Stale thinking detection** — indicateur "Calling tool…" quand le modèle prépare un appel d'outil (frontend-side)
+- [x] **Live reasoning stack** — le raisonnement se collapse automatiquement quand la réponse finale commence
+- [x] **Framer Motion** — animations sur les messages, le reasoning expand/collapse, et les transitions
 
 ---
 
