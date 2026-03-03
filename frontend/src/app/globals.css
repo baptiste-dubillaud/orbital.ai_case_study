@@ -1,5 +1,6 @@
-/*  Design tokens  */
-:root {
+/*  Design tokens – Dark (default)  */
+:root,
+[data-theme="dark"] {
   /* Backgrounds */
   --color-bg-primary: #1a1a1a;
   --color-bg-secondary: #2a2a2a;
@@ -44,10 +45,69 @@
   --color-white: #fff;
 }
 
+/*  Design tokens – Light  */
+[data-theme="light"] {
+  /* Backgrounds */
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f3f3f3;
+  --color-bg-sidebar: #f7f7f8;
+  --color-bg-surface: #f9f9f9;
+  --color-bg-hover: #eaeaea;
+  --color-bg-elevated: #efefef;
+
+  /* Borders */
+  --color-border-primary: #ddd;
+  --color-border-secondary: #d0d0d0;
+  --color-border-hover: #bbb;
+  --color-border-muted: #ccc;
+
+  /* Text */
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #333;
+  --color-text-muted: #666;
+  --color-text-subtle: #999;
+  --color-text-faint: #777;
+  --color-text-label: #444;
+  --color-text-chip: #555;
+  --color-text-subtitle: #888;
+
+  /* Accents */
+  --color-accent-green: #43a047;
+  --color-accent-blue: #1e88e5;
+  --color-accent-pink: #d4748a;
+  --color-accent-red: #e53935;
+
+  /* Code */
+  --color-code-bg: #f5f5f5;
+  --color-code-text: #333;
+
+  /* Overlays */
+  --color-overlay-light: rgba(0, 0, 0, 0.04);
+  --color-overlay-lighter: rgba(0, 0, 0, 0.02);
+  --color-overlay-lightest: rgba(0, 0, 0, 0.01);
+  --color-overlay-dark: rgba(0, 0, 0, 0.08);
+
+  /* Misc */
+  --color-white: #fff;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+/* Smooth theme transition – only active during theme switch */
+html.theme-transition,
+html.theme-transition *,
+html.theme-transition *::before,
+html.theme-transition *::after {
+  transition: background-color 0.3s ease,
+              color 0.3s ease,
+              border-color 0.3s ease,
+              box-shadow 0.3s ease,
+              fill 0.3s ease,
+              stroke 0.3s ease !important;
 }
 
 html, body {

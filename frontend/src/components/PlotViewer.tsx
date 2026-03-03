@@ -2,43 +2,63 @@
 
 import { memo, useState, useEffect } from "react";
 import { API_BASE } from "@/lib/api";
+import { useThemeContext, Theme } from "@/context/ThemeContext";
 import styles from "@/styles/components/PlotViewer.module.css";
 
-// ── Two-phase dark theme injection (frontend-only) ──
-// Phase 1: injected into <head> — dark body + hide chart div to prevent flash
-const DARK_HEAD_STYLE =
-  '<style>body{background:#1a1a1a;margin:0}.plotly-graph-div{visibility:hidden}</style>';
+// ── Theme-dependent injection helpers ──
 
-// Phase 2: injected before </body> — Plotly.relayout to dark colors, then reveal
-const DARK_BODY_SCRIPT = [
-  '<script>(function(){',
-  'var d={paper_bgcolor:"#1a1a1a",plot_bgcolor:"#1e1e1e",',
-  'font:{color:"#e0e0e0",family:"system-ui,sans-serif"},',
-  'title:{font:{color:"#e0e0e0"}},',
-  'colorway:["#81c995","#6dade0","#e8b4b8","#e57373","#FFA15A","#19D3F3","#FF6692","#B6E880"],',
-  'xaxis:{gridcolor:"#333",zerolinecolor:"#444",tickfont:{color:"#ccc"},title:{font:{color:"#ccc"}}},',
-  'yaxis:{gridcolor:"#333",zerolinecolor:"#444",tickfont:{color:"#ccc"},title:{font:{color:"#ccc"}}},',
-  'legend:{font:{color:"#ccc"}},margin:{l:60,r:30,t:50,b:50}};',
-  'function a(){var g=document.querySelector(".plotly-graph-div");',
-  'if(g&&typeof Plotly!=="undefined"){',
-  'var l=g.layout||{};for(var k in l){',
-  'if(/^xaxis\\d/.test(k))d[k]={gridcolor:"#333",zerolinecolor:"#444",tickfont:{color:"#ccc"},title:{font:{color:"#ccc"}}};',
-  'if(/^yaxis\\d/.test(k))d[k]={gridcolor:"#333",zerolinecolor:"#444",tickfont:{color:"#ccc"},title:{font:{color:"#ccc"}}};',
-  '}Plotly.relayout(g,d).then(function(){g.style.visibility="visible"});',
-  '}else{setTimeout(a,50)}}',
-  'if(document.readyState==="complete")a();',
-  'else window.addEventListener("load",a);',
-  '})();</script>',
-].join('');
+function headStyle(theme: Theme): string {
+  const bg = theme === "dark" ? "#1a1a1a" : "#ffffff";
+  return `<style>body{background:${bg};margin:0}.plotly-graph-div{visibility:hidden}</style>`;
+}
+
+function bodyScript(theme: Theme): string {
+  const isDark = theme === "dark";
+  const paperBg = isDark ? "#1a1a1a" : "#ffffff";
+  const plotBg = isDark ? "#1e1e1e" : "#f9f9f9";
+  const fontColor = isDark ? "#e0e0e0" : "#1a1a1a";
+  const gridColor = isDark ? "#333" : "#ddd";
+  const zeroColor = isDark ? "#444" : "#ccc";
+  const tickColor = isDark ? "#ccc" : "#444";
+  const legendColor = isDark ? "#ccc" : "#333";
+  const colorway = isDark
+    ? '["#81c995","#6dade0","#e8b4b8","#e57373","#FFA15A","#19D3F3","#FF6692","#B6E880"]'
+    : '["#43a047","#1e88e5","#d4748a","#e53935","#fb8c00","#00acc1","#e91e63","#7cb342"]';
+
+  return [
+    '<script>(function(){',
+    `var d={paper_bgcolor:"${paperBg}",plot_bgcolor:"${plotBg}",`,
+    `font:{color:"${fontColor}",family:"system-ui,sans-serif"},`,
+    `title:{font:{color:"${fontColor}"}},`,
+    `colorway:${colorway},`,
+    `xaxis:{gridcolor:"${gridColor}",zerolinecolor:"${zeroColor}",tickfont:{color:"${tickColor}"},title:{font:{color:"${tickColor}"}}},`,
+    `yaxis:{gridcolor:"${gridColor}",zerolinecolor:"${zeroColor}",tickfont:{color:"${tickColor}"},title:{font:{color:"${tickColor}"}}},`,
+    `legend:{font:{color:"${legendColor}"}},margin:{l:60,r:30,t:50,b:50}};`,
+    'function a(){var g=document.querySelector(".plotly-graph-div");',
+    'if(g&&typeof Plotly!=="undefined"){',
+    'var l=g.layout||{};for(var k in l){',
+    `if(/^xaxis\\d/.test(k))d[k]={gridcolor:"${gridColor}",zerolinecolor:"${zeroColor}",tickfont:{color:"${tickColor}"},title:{font:{color:"${tickColor}"}}};`,
+    `if(/^yaxis\\d/.test(k))d[k]={gridcolor:"${gridColor}",zerolinecolor:"${zeroColor}",tickfont:{color:"${tickColor}"},title:{font:{color:"${tickColor}"}}};`,
+    '}Plotly.relayout(g,d).then(function(){g.style.visibility="visible"});',
+    '}else{setTimeout(a,50)}}',
+    'if(document.readyState==="complete")a();',
+    'else window.addEventListener("load",a);',
+    '})();</script>',
+  ].join('');
+}
 
 interface PlotViewerProps {
   files: string[];
 }
 
 function PlotFrame({ file }: { file: string }) {
+  const { theme } = useThemeContext();
   const [html, setHtml] = useState<string | null>(null);
   const [error, setError] = useState(false);
+  /* Store the raw HTML so we can re-theme without re-fetching */
+  const [rawHtml, setRawHtml] = useState<string | null>(null);
 
+  /* Fetch the raw HTML once */
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -48,21 +68,25 @@ function PlotFrame({ file }: { file: string }) {
         );
         if (!res.ok) throw new Error();
         const text = await res.text();
-        // Phase 1: inject dark CSS into <head> (immediate dark bg, hidden chart)
-        let themed = text.includes("</head>")
-          ? text.replace("</head>", DARK_HEAD_STYLE + "</head>")
-          : DARK_HEAD_STYLE + text;
-        // Phase 2: inject relayout script before </body> (applies dark, reveals)
-        themed = themed.includes("</body>")
-          ? themed.replace("</body>", DARK_BODY_SCRIPT + "</body>")
-          : themed + DARK_BODY_SCRIPT;
-        if (!cancelled) setHtml(themed);
+        if (!cancelled) setRawHtml(text);
       } catch {
         if (!cancelled) setError(true);
       }
     })();
     return () => { cancelled = true; };
   }, [file]);
+
+  /* Apply theme injection whenever rawHtml or theme changes */
+  useEffect(() => {
+    if (!rawHtml) return;
+    let themed = rawHtml.includes("</head>")
+      ? rawHtml.replace("</head>", headStyle(theme) + "</head>")
+      : headStyle(theme) + rawHtml;
+    themed = themed.includes("</body>")
+      ? themed.replace("</body>", bodyScript(theme) + "</body>")
+      : themed + bodyScript(theme);
+    setHtml(themed);
+  }, [rawHtml, theme]);
 
   return (
     <div className={styles.plotWrapper}>
