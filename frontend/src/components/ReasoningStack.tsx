@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ReasoningItem } from "@/lib/types";
 import styles from "@/styles/components/ReasoningStack.module.css";
@@ -105,24 +105,25 @@ export default function ReasoningStack({
 
   if (!items || items.length === 0) return null;
 
-  const toolNames = [
-    ...new Set(
-      items
-        .filter((item) => item.type === "tool_call")
-        .map((item) =>
-          item.type === "tool_call" ? item.toolCall.toolName : ""
-        )
-    ),
-  ];
-
-  const hasThinking = items.some((item) => item.type === "thinking");
-
-  const label = [
-    hasThinking ? "Reasoning" : "",
-    toolNames.length > 0 ? toolNames.join(", ") : "",
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  const label = useMemo(() => {
+    const toolNames = [
+      ...new Set(
+        items
+          .filter(
+            (item): item is Extract<ReasoningItem, { type: "tool_call" }> =>
+              item.type === "tool_call"
+          )
+          .map((item) => item.toolCall.toolName)
+      ),
+    ];
+    const hasThinking = items.some((item) => item.type === "thinking");
+    return [
+      hasThinking ? "Reasoning" : "",
+      toolNames.length > 0 ? toolNames.join(", ") : "",
+    ]
+      .filter(Boolean)
+      .join(" · ");
+  }, [items]);
 
   return (
     <div className={styles.section}>

@@ -1,7 +1,7 @@
 /* Collapsed reasoning section (finalized messages) */
 .section {
   margin-bottom: 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--color-overlay-light);
   padding-bottom: 8px;
 }
 
@@ -12,7 +12,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: #888;
+  color: var(--color-text-muted);
   font-size: 0.8rem;
   padding: 4px 0;
   font-family: inherit;
@@ -20,7 +20,7 @@
 }
 
 .toggle:hover {
-  color: #bbb;
+  color: var(--color-text-label);
 }
 
 .arrow {
@@ -42,17 +42,17 @@
   align-self: flex-start;
   max-width: 80%;
   padding: 12px 16px;
-  border-left: 3px solid #444;
-  background: rgba(255, 255, 255, 0.03);
+  border-left: 3px solid var(--color-border-muted);
+  background: var(--color-overlay-lighter);
   border-radius: 0 12px 12px 0;
-  color: #888;
+  color: var(--color-text-muted);
   font-size: 0.9rem;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 .thinking {
-  border-left: 2px solid #444;
+  border-left: 2px solid var(--color-border-muted);
   padding-left: 10px;
 }
 
@@ -61,13 +61,13 @@
   white-space: pre-wrap;
   line-height: 1.45;
   font-style: italic;
-  color: #888;
+  color: var(--color-text-muted);
 }
 
 /* Tool call block */
 .toolEvent {
   padding-left: 2px;
-  color: #999;
+  color: var(--color-text-faint);
   font-size: 0.82rem;
 }
 
@@ -79,7 +79,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #81c995;
+  color: var(--color-accent-green);
   font-weight: 500;
   user-select: none;
   list-style: none;
@@ -98,7 +98,7 @@
 .toolStatus {
   font-weight: 400;
   font-style: italic;
-  color: #888;
+  color: var(--color-text-muted);
   font-size: 0.78rem;
 }
 
@@ -112,19 +112,19 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #666;
+  color: var(--color-text-subtle);
   margin-bottom: 2px;
 }
 
 .toolResult pre {
   margin: 0;
   padding: 6px 8px;
-  background: rgba(0, 0, 0, 0.25);
+  background: var(--color-overlay-dark);
   border-radius: 4px;
   font-size: 0.78rem;
   line-height: 1.35;
   overflow-x: auto;
-  color: #aaa;
+  color: var(--color-text-chip);
   white-space: pre-wrap;
   word-break: break-word;
   max-height: 200px;
@@ -133,7 +133,7 @@
 
 /* Calling tool indicator */
 .callingTool {
-  color: #81c995;
+  color: var(--color-accent-green);
   font-size: 0.82rem;
   font-weight: 500;
   padding: 2px 0;

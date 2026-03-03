@@ -1,29 +1,32 @@
 "use client";
 
+import { memo, useCallback } from "react";
 import { useChatContext } from "@/context/ChatContext";
+import { useDatasetContext } from "@/context/DatasetContext";
 import styles from "@/styles/components/DatasetCards.module.css";
 
-export default function DatasetCards() {
-  const { datasets, hasMessages, handleSend } = useChatContext();
+function DatasetCards() {
+  const { datasets } = useDatasetContext();
+  const { hasMessages, handleSend } = useChatContext();
+
+  const onCardClick = useCallback(
+    (name: string) => {
+      handleSend(`Give me basic statistics on this dataset: ${name}`);
+    },
+    [handleSend]
+  );
 
   if (hasMessages || datasets.length === 0) return null;
-
-  function onCardClick(name: string) {
-    handleSend(`Give me basic statistics on this dataset: ${name}`);
-  }
 
   return (
     <div className={styles.container}>
       <p className={styles.subtitle}>Available datasets</p>
       <div className={styles.grid}>
         {datasets.map((ds) => (
-          <div
+          <button
             key={ds.name}
             className={styles.card}
             onClick={() => onCardClick(ds.name)}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => e.key === "Enter" && onCardClick(ds.name)}
           >
             <h3 className={styles.cardName}>{ds.name}</h3>
             <div className={styles.cardStats}>
@@ -37,9 +40,11 @@ export default function DatasetCards() {
                 </span>
               ))}
             </div>
-          </div>
+          </button>
         ))}
       </div>
     </div>
   );
 }
+
+export default memo(DatasetCards);

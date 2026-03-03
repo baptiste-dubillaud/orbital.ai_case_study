@@ -40,6 +40,6 @@
 }
 
 .messagesArea::-webkit-scrollbar-thumb {
-  background: #333;
+  background: var(--color-border-primary);
   border-radius: 3px;
 }

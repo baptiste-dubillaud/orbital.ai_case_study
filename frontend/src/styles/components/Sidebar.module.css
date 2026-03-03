@@ -2,8 +2,8 @@
 .sidebar {
   width: 280px;
   min-width: 280px;
-  background: #141414;
-  border-right: 1px solid #2a2a2a;
+  background: var(--color-bg-sidebar);
+  border-right: 1px solid var(--color-bg-secondary);
   display: flex;
   flex-direction: column;
   padding: 16px 12px;
@@ -18,10 +18,10 @@
   gap: 8px;
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid #333;
+  border: 1px solid var(--color-border-primary);
   border-radius: 10px;
   background: transparent;
-  color: #e0e0e0;
+  color: var(--color-text-primary);
   font-size: 0.9rem;
   cursor: pointer;
   transition: background 0.2s;
@@ -30,7 +30,7 @@
 }
 
 .newChatBtn:hover {
-  background: #222;
+  background: var(--color-bg-hover);
 }
 
 .plusIcon {
@@ -53,7 +53,7 @@
 }
 
 .list::-webkit-scrollbar-thumb {
-  background: #333;
+  background: var(--color-border-primary);
   border-radius: 2px;
 }
 
@@ -67,14 +67,20 @@
   cursor: pointer;
   transition: background 0.15s;
   min-width: 0;
+  width: 100%;
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
 }
 
 .item:hover {
-  background: #222;
+  background: var(--color-bg-hover);
 }
 
 .item.active {
-  background: #2a2a2a;
+  background: var(--color-bg-secondary);
 }
 
 .itemLabel {
@@ -83,11 +89,11 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 0.85rem;
-  color: #ccc;
+  color: var(--color-text-label);
 }
 
 .item.active .itemLabel {
-  color: #e0e0e0;
+  color: var(--color-text-primary);
 }
 
 /* Delete button */
@@ -95,7 +101,7 @@
   flex-shrink: 0;
   background: none;
   border: none;
-  color: #666;
+  color: var(--color-text-subtle);
   font-size: 1.1rem;
   cursor: pointer;
   padding: 0 4px;
@@ -110,5 +116,5 @@
 }
 
 .deleteBtn:hover {
-  color: #e57373;
+  color: var(--color-accent-red);
 }

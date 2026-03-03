@@ -1,23 +1,18 @@
 "use client";
 
-import { useRef, useEffect, KeyboardEvent } from "react";
+import { memo, useRef, KeyboardEvent } from "react";
 import { motion } from "framer-motion";
 import { useChatContext } from "@/context/ChatContext";
+import { useAutoResize } from "@/hooks";
 import DatasetCards from "./DatasetCards";
 import styles from "@/styles/components/ChatInput.module.css";
 
-export default function ChatInput() {
+function ChatInput() {
   const { input, setInput, handleSend, isLoading, hasMessages } =
     useChatContext();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height =
-        Math.min(textareaRef.current.scrollHeight, 150) + "px";
-    }
-  }, [input]);
+  useAutoResize(textareaRef, input);
 
   function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -61,6 +56,7 @@ export default function ChatInput() {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Send a message..."
+          aria-label="Message input"
           rows={1}
           disabled={isLoading}
         />
@@ -88,3 +84,5 @@ export default function ChatInput() {
     </motion.div>
   );
 }
+
+export default memo(ChatInput);

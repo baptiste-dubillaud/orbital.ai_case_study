@@ -16,28 +16,14 @@ function writeAll(conversations: Conversation[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(conversations));
 }
 
-/** Get all conversations sorted by id (newest first) */
+/** Get all conversations sorted newest first */
 export function getAllConversations(): Conversation[] {
-  return readAll().sort((a, b) => b.id.localeCompare(a.id));
+  return readAll().sort((a, b) => b.updatedAt - a.updatedAt);
 }
 
 /** Get a single conversation by id */
 export function getConversation(id: string): Conversation | undefined {
   return readAll().find((c) => c.id === id);
-}
-
-/** Create a new empty conversation and return it */
-export function createConversation(id: string): Conversation {
-  const conv: Conversation = {
-    id,
-    messages: [],
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  };
-  const all = readAll();
-  all.push(conv);
-  writeAll(all);
-  return conv;
 }
 
 /** Save messages for a given conversation */

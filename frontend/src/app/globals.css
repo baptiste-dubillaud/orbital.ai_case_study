@@ -1,3 +1,49 @@
+/* ── Design tokens ── */
+:root {
+  /* Backgrounds */
+  --color-bg-primary: #1a1a1a;
+  --color-bg-secondary: #2a2a2a;
+  --color-bg-sidebar: #141414;
+  --color-bg-surface: #1e1e1e;
+  --color-bg-hover: #222;
+  --color-bg-elevated: #252525;
+
+  /* Borders */
+  --color-border-primary: #333;
+  --color-border-secondary: #3a3a3a;
+  --color-border-hover: #555;
+  --color-border-muted: #444;
+
+  /* Text */
+  --color-text-primary: #e0e0e0;
+  --color-text-secondary: #d0d0d0;
+  --color-text-muted: #888;
+  --color-text-subtle: #666;
+  --color-text-faint: #999;
+  --color-text-label: #ccc;
+  --color-text-chip: #aaa;
+  --color-text-subtitle: #777;
+
+  /* Accents */
+  --color-accent-green: #81c995;
+  --color-accent-blue: #6dade0;
+  --color-accent-pink: #e8b4b8;
+  --color-accent-red: #e57373;
+
+  /* Code */
+  --color-code-bg: #1e1e1e;
+  --color-code-text: #d4d4d4;
+
+  /* Overlays */
+  --color-overlay-light: rgba(255, 255, 255, 0.06);
+  --color-overlay-lighter: rgba(255, 255, 255, 0.03);
+  --color-overlay-lightest: rgba(255, 255, 255, 0.02);
+  --color-overlay-dark: rgba(0, 0, 0, 0.25);
+
+  /* Misc */
+  --color-white: #fff;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -8,8 +54,8 @@ html, body {
   height: 100%;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
     Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
-  background: #1a1a1a;
-  color: #e0e0e0;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

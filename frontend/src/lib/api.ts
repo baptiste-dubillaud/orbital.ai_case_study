@@ -1,5 +1,8 @@
 import { ChatMessagesRequest, DatasetInfo, StreamCallbacks, ToolCall } from "./types";
 
+// Use the backend URL directly to avoid Next.js rewrite proxy buffering SSE.
+export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
+
 export async function summarizeMessage(message: string): Promise<string> {
   const res = await fetch(`${API_BASE}/api/v1/llm/summarize`, {
     method: "POST",
@@ -10,11 +13,6 @@ export async function summarizeMessage(message: string): Promise<string> {
   const json = await res.json();
   return json.title as string;
 }
-
-// Use the backend URL directly to avoid Next.js rewrite proxy
-// which buffers SSE responses instead of streaming them.
-// Use the backend URL directly to avoid Next.js rewrite proxy buffering SSE.
-export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 export async function fetchDatasets(): Promise<DatasetInfo[]> {
   const res = await fetch(`${API_BASE}/api/v1/data`);
@@ -71,50 +69,54 @@ export async function streamMessage(
 
       if (!event) continue;
 
-      switch (event) {
-        case "thinking": {
-          const parsed = JSON.parse(data);
-          callbacks.onThinkingChunk(parsed.content as string);
-          break;
-        }
-        case "content": {
-          const parsed = JSON.parse(data);
-          callbacks.onContent(parsed.content);
-          break;
-        }
-        case "tool_call": {
-          const parsed = JSON.parse(data);
-          let args: Record<string, unknown> | undefined;
-          if (parsed.args && typeof parsed.args === "string" && parsed.args.length > 0) {
-            try { args = JSON.parse(parsed.args); } catch { args = undefined; }
-          } else if (parsed.args && typeof parsed.args === "object") {
-            args = parsed.args;
+      try {
+        switch (event) {
+          case "thinking": {
+            const parsed = JSON.parse(data);
+            callbacks.onThinkingChunk(parsed.content as string);
+            break;
           }
-          const tc: ToolCall = {
-            toolCallId: parsed.tool_call_id,
-            toolName: parsed.tool_name ?? "",
-            ...(args && { args }),
-          };
-          callbacks.onToolCall(tc);
-          break;
+          case "content": {
+            const parsed = JSON.parse(data);
+            callbacks.onContent(parsed.content);
+            break;
+          }
+          case "tool_call": {
+            const parsed = JSON.parse(data);
+            let args: Record<string, unknown> | undefined;
+            if (parsed.args && typeof parsed.args === "string" && parsed.args.length > 0) {
+              try { args = JSON.parse(parsed.args); } catch { args = undefined; }
+            } else if (parsed.args && typeof parsed.args === "object") {
+              args = parsed.args;
+            }
+            const tc: ToolCall = {
+              toolCallId: parsed.tool_call_id,
+              toolName: parsed.tool_name ?? "",
+              ...(args && { args }),
+            };
+            callbacks.onToolCall(tc);
+            break;
+          }
+          case "tool_result": {
+            const parsed = JSON.parse(data);
+            callbacks.onToolResult(
+              parsed.tool_call_id,
+              parsed.tool_name ?? "",
+              parsed.result,
+            );
+            break;
+          }
+          case "Done":
+            callbacks.onDone();
+            return;
+          case "error": {
+            const parsed = JSON.parse(data);
+            callbacks.onError(parsed.content);
+            return;
+          }
         }
-        case "tool_result": {
-          const parsed = JSON.parse(data);
-          callbacks.onToolResult(
-            parsed.tool_call_id,
-            parsed.tool_name ?? "",
-            parsed.result,
-          );
-          break;
-        }
-        case "Done":
-          callbacks.onDone();
-          return;
-        case "error": {
-          const parsed = JSON.parse(data);
-          callbacks.onError(parsed.content);
-          return;
-        }
+      } catch (e) {
+        console.error("Failed to parse SSE event:", event, data, e);
       }
 
       // Yield control so React can flush state updates

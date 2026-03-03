@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef, useEffect, useMemo } from "react";
+import { useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useChatContext } from "@/context/ChatContext";
+import { useScrollToBottom } from "@/hooks";
 import ChatBubble from "./ChatBubble";
 import ChatInput from "./ChatInput";
 import Sidebar from "./Sidebar";
@@ -16,8 +17,8 @@ export default function ChatLayout() {
     isLoading,
     streamingContent,
     liveReasoning,
-    livePlotFiles,
   } = useChatContext();
+  const messagesAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   /*
@@ -34,16 +35,13 @@ export default function ChatLayout() {
       role: "assistant",
       content: streamingContent,
       ...(liveReasoning.length > 0 && { reasoning: liveReasoning }),
-      ...(livePlotFiles.length > 0 && { plotFiles: livePlotFiles }),
     };
     return [...messages, virtualMsg];
-  }, [messages, isLoading, streamingContent, liveReasoning, livePlotFiles]);
+  }, [messages, isLoading, streamingContent, liveReasoning]);
 
   const streamingIndex = isLoading ? displayMessages.length - 1 : -1;
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [displayMessages]);
+  useScrollToBottom(messagesAreaRef, displayMessages);
 
   return (
     <div className={styles.outerWrapper}>
@@ -55,6 +53,7 @@ export default function ChatLayout() {
           {hasMessages && (
             <motion.div
               className={styles.messagesArea}
+              ref={messagesAreaRef}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.3 }}
@@ -62,7 +61,7 @@ export default function ChatLayout() {
               <div className={styles.messagesList}>
                 {displayMessages.map((msg, i) => (
                   <ChatBubble
-                    key={i}
+                    key={`${msg.role}-${i}`}
                     message={msg}
                     index={i}
                     streaming={i === streamingIndex}

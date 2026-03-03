@@ -1,32 +1,32 @@
 "use client";
 
-import { useChatContext } from "@/context/ChatContext";
+import { memo } from "react";
+import { useConversationContext } from "@/context/ConversationContext";
 import styles from "@/styles/components/Sidebar.module.css";
 
-export default function Sidebar() {
+function Sidebar() {
   const {
     conversations,
     activeConversationId,
     switchConversation,
     startNewChat,
     removeConversation,
-  } = useChatContext();
+  } = useConversationContext();
 
   return (
-    <aside className={styles.sidebar}>
+    <aside className={styles.sidebar} aria-label="Conversation history">
       {/* New chat button */}
       <button className={styles.newChatBtn} onClick={startNewChat}>
         <span className={styles.plusIcon}>+</span>
         New Chat
       </button>
 
-      {/* Conversation list — only show conversations that have messages */}
-      <nav className={styles.list}>
+      {/* Conversation list */}
+      <nav className={styles.list} aria-label="Chat list">
         {conversations
-          .filter((conv) => conv.messages.length > 0 || conv.id === activeConversationId)
           .filter((conv) => conv.messages.length > 0)
           .map((conv) => (
-          <div
+          <button
             key={conv.id}
             className={`${styles.item} ${
               conv.id === activeConversationId ? styles.active : ""
@@ -36,19 +36,22 @@ export default function Sidebar() {
               <span className={styles.itemLabel} title={conv.title || conv.id}>
                 {conv.title || conv.id}
               </span>
-              <button
+              <span
+                role="button"
                 className={styles.deleteBtn}
                 onClick={(e) => {
                   e.stopPropagation();
                   removeConversation(conv.id);
                 }}
-                aria-label="Delete conversation"
+                aria-label={`Delete conversation ${conv.title || conv.id}`}
               >
                 ×
-              </button>
-            </div>
+              </span>
+            </button>
           ))}
       </nav>
     </aside>
   );
 }
+
+export default memo(Sidebar);

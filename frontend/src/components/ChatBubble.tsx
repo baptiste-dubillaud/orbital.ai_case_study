@@ -1,8 +1,9 @@
 "use client";
 
-import { memo, useState, useEffect, useRef } from "react";
+import { memo } from "react";
 import { motion } from "framer-motion";
 import { ChatMessage } from "@/lib/types";
+import { useStaleDetection } from "@/hooks";
 import MarkdownRenderer from "./MarkdownRenderer";
 import ReasoningStack from "./ReasoningStack";
 import PlotViewer from "./PlotViewer";
@@ -14,8 +15,6 @@ interface ChatBubbleProps {
   streaming?: boolean;
 }
 
-const STALE_THINKING_MS = 500;
-
 function ChatBubble({ message, index, streaming = false }: ChatBubbleProps) {
   const isUser = message.role === "user";
   const hasReasoning =
@@ -24,35 +23,7 @@ function ChatBubble({ message, index, streaming = false }: ChatBubbleProps) {
     !isUser && message.plotFiles && message.plotFiles.length > 0;
   const hasContent = !!message.content;
 
-  /* ── Stale-thinking detection (streaming only) ── */
-  const [stale, setStale] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (!streaming) {
-      setStale(false);
-      return;
-    }
-
-    const hasThinking = message.reasoning?.some((r) => r.type === "thinking");
-    const hasToolCall = message.reasoning?.some((r) => r.type === "tool_call");
-
-    if (hasToolCall || hasContent) {
-      setStale(false);
-      if (timerRef.current) clearTimeout(timerRef.current);
-      return;
-    }
-
-    setStale(false);
-    if (timerRef.current) clearTimeout(timerRef.current);
-    if (hasThinking) {
-      timerRef.current = setTimeout(() => setStale(true), STALE_THINKING_MS);
-    }
-
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, [streaming, message.reasoning, hasContent]);
+  const stale = useStaleDetection(streaming, message.reasoning, hasContent);
 
   /* ── Reasoning: expanded during streaming until content arrives ── */
   const reasoningExpanded = streaming && !hasContent;
