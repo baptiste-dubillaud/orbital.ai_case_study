@@ -10,10 +10,8 @@ import styles from "@/styles/components/ReasoningStack.module.css";
 
 function ReasoningItemView({
   item,
-  defaultOpen,
 }: {
   item: ReasoningItem;
-  defaultOpen?: boolean;
 }) {
   if (item.type === "thinking") {
     return (
@@ -28,29 +26,31 @@ function ReasoningItemView({
 
   return (
     <div className={styles.toolEvent}>
-      <details className={styles.toolResult} open={defaultOpen}>
-        <summary>
-          <span className={styles.toolIcon}>
-            {isRunning ? "..." : "Done !"}
-          </span>
-          <strong>{tc.toolName}</strong>
-          {isRunning && (
-            <span className={styles.toolStatus}> running…</span>
+      <div className={styles.toolHeader}>
+        <span className={isRunning ? styles.statusRunning : styles.statusDone}>
+          {isRunning ? (
+            <span className={styles.spinnerIcon} />
+          ) : (
+            <span className={styles.checkIcon}>✓</span>
           )}
-        </summary>
-        {tc.args && (
-          <div className={styles.toolSection}>
-            <span className={styles.toolSectionLabel}>Args</span>
-            <pre>{JSON.stringify(tc.args, null, 2)}</pre>
-          </div>
+        </span>
+        <span className={styles.toolName}>{tc.toolName}</span>
+        {isRunning && (
+          <span className={styles.toolStatus}>running…</span>
         )}
-        {tc.result && (
-          <div className={styles.toolSection}>
-            <span className={styles.toolSectionLabel}>Result</span>
-            <pre>{tc.result}</pre>
-          </div>
-        )}
-      </details>
+      </div>
+      {tc.args && (
+        <div className={styles.toolSection}>
+          <span className={styles.toolSectionLabel}>Args</span>
+          <pre>{JSON.stringify(tc.args, null, 2)}</pre>
+        </div>
+      )}
+      {tc.result && (
+        <div className={styles.toolSection}>
+          <span className={styles.toolSectionLabel}>Result</span>
+          <pre>{tc.result}</pre>
+        </div>
+      )}
     </div>
   );
 }
@@ -62,12 +62,18 @@ function ReasoningItemView({
 function ReasoningStackContent({ items, callingTool }: { items: ReasoningItem[]; callingTool?: boolean }) {
   return (
     <div className={styles.stack}>
-      {items.map((item, i) => {
-        const isLast = i === items.length - 1;
-        return <ReasoningItemView key={i} item={item} defaultOpen={isLast} />;
-      })}
+      {items.map((item, i) => (
+        <ReasoningItemView key={i} item={item} />
+      ))}
       {callingTool && (
-        <div className={styles.callingTool}>Calling tool…</div>
+        <div className={styles.toolEvent}>
+          <div className={styles.toolHeader}>
+            <span className={styles.statusRunning}>
+              <span className={styles.spinnerIcon} />
+            </span>
+            <span className={styles.toolName}>Calling tool…</span>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -133,7 +139,9 @@ export default function ReasoningStack({
         aria-expanded={open}
       >
         <span className={`${styles.arrow} ${open ? styles.arrowOpen : ""}`}>
-          ▸
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M4.5 2.5L8 6L4.5 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </span>
         <span className={styles.label}>{label}</span>
       </button>

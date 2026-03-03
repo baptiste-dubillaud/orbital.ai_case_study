@@ -1,10 +1,4 @@
 /* Collapsed reasoning section (finalized messages) */
-.section {
-  margin-bottom: 10px;
-  border-bottom: 1px solid var(--color-overlay-light);
-  padding-bottom: 8px;
-}
-
 .toggle {
   display: flex;
   align-items: center;
@@ -24,9 +18,12 @@
 }
 
 .arrow {
-  display: inline-block;
-  font-size: 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
   transition: transform 0.15s;
+  flex-shrink: 0;
 }
 
 .arrowOpen {
@@ -52,8 +49,7 @@
   gap: 8px;
 }
 .thinking {
-  border-left: 2px solid var(--color-border-muted);
-  padding-left: 10px;
+  padding: 4px 0;
 }
 
 .thinkingText {
@@ -62,37 +58,71 @@
   line-height: 1.45;
   font-style: italic;
   color: var(--color-text-muted);
+  font-size: 0.84rem;
 }
 
 /* Tool call block */
 .toolEvent {
-  padding-left: 2px;
+  padding: 6px 10px;
   color: var(--color-text-faint);
   font-size: 0.82rem;
+  border-radius: 8px;
+  background: var(--color-overlay-lightest);
+  border: 1px solid var(--color-overlay-light);
 }
 
-.toolResult {
-  cursor: pointer;
-}
-
-.toolResult summary {
+.toolHeader {
   display: flex;
   align-items: center;
-  gap: 6px;
-  color: var(--color-accent-green);
-  font-weight: 500;
-  user-select: none;
-  list-style: none;
+  gap: 8px;
   padding: 2px 0;
 }
 
-.toolResult summary::-webkit-details-marker {
-  display: none;
+.toolName {
+  font-weight: 600;
+  color: var(--color-text-label);
+  font-size: 0.82rem;
 }
 
-.toolIcon {
-  font-size: 0.75rem;
+/* Status indicators */
+.statusRunning,
+.statusDone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
   flex-shrink: 0;
+}
+
+.statusRunning {
+  background: var(--color-overlay-light);
+}
+
+.statusDone {
+  background: rgba(129, 201, 149, 0.15);
+}
+
+.spinnerIcon {
+  display: block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--color-border-primary);
+  border-top-color: var(--color-text-muted);
+  border-radius: 50%;
+  animation: toolSpin 0.7s linear infinite;
+}
+
+@keyframes toolSpin {
+  to { transform: rotate(360deg); }
+}
+
+.checkIcon {
+  font-size: 0.7rem;
+  color: var(--color-accent-green);
+  font-weight: 700;
+  line-height: 1;
 }
 
 .toolStatus {
@@ -103,7 +133,7 @@
 }
 
 .toolSection {
-  margin: 4px 0 0 18px;
+  margin: 6px 0 0 26px;
 }
 
 .toolSectionLabel {
@@ -116,7 +146,7 @@
   margin-bottom: 2px;
 }
 
-.toolResult pre {
+.toolEvent pre {
   margin: 0;
   padding: 6px 8px;
   background: var(--color-overlay-dark);
@@ -131,16 +161,4 @@
   overflow-y: auto;
 }
 
-/* Calling tool indicator */
-.callingTool {
-  color: var(--color-accent-green);
-  font-size: 0.82rem;
-  font-weight: 500;
-  padding: 2px 0;
-  animation: pulse 1.5s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
+/* Removed old callingTool indicator — now uses .toolEvent card style */

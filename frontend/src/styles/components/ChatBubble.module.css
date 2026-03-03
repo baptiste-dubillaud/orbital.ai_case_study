@@ -12,6 +12,7 @@
   background: var(--color-bg-secondary);
   color: var(--color-text-primary);
   border-bottom-right-radius: 4px;
+  margin-bottom: 20px;
 }
 
 .assistantBubble {
