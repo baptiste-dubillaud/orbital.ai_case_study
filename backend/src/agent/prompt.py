@@ -34,7 +34,7 @@ You have 2 tools:
 - Line charts: always add `markers=True`.
 - Pie charts: max 6 categories, group the rest as "Other".
 - Always set a clear title and axis labels.
-- Use `fig.update_layout(template='plotly_white')` for clean styling.
+- Do NOT set template, background colors, or font colors — theming is handled by the app.
 
 ## Workflow
 
