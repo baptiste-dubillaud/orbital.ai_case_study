@@ -23,7 +23,7 @@ export function useScrollToBottom<T>(
     return el.scrollHeight - el.scrollTop - el.clientHeight < NEAR_BOTTOM_PX;
   }, []);
 
-  /* ── User-initiated scroll detection ─────────────────────── */
+  /*  User-initiated scroll detection  */
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -51,7 +51,7 @@ export function useScrollToBottom<T>(
     };
   }, [containerRef, isNearBottom]);
 
-  /* ── Auto-scroll when dep changes ────────────────────────── */
+  /*  Auto-scroll when dep changes  */
   useEffect(() => {
     if (!lockedRef.current) return;
 

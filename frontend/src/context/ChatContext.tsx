@@ -15,20 +15,20 @@ import { ChatMessage, ReasoningItem, ToolCall } from "@/lib/types";
 import { useConversationContext } from "./ConversationContext";
 
 interface ChatContextValue {
-  /* ── Data ── */
+  /*  Data  */
   messages: ChatMessage[];
 
-  /* ── Streaming state ── */
+  /*  Streaming state  */
   isLoading: boolean;
   streamingContent: string;
   liveReasoning: ReasoningItem[];
 
-  /* ── Input ── */
+  /*  Input  */
   input: string;
   setInput: (value: string) => void;
   handleSend: (message?: string) => void;
 
-  /* ── Derived ── */
+  /*  Derived  */
   hasMessages: boolean;
 }
 
@@ -40,7 +40,7 @@ export function useChatContext() {
   return ctx;
 }
 
-/* ── Helpers to build the reasoning array immutably ── */
+/*  Helpers to build the reasoning array immutably  */
 
 function appendThinkingChunk(
   items: ReasoningItem[],

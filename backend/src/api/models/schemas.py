@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 
 
-# ── Shared ──────────────────────────────────────────────────────────
+#  Shared 
 
 
 class MessagePayload(BaseModel):
@@ -9,7 +9,7 @@ class MessagePayload(BaseModel):
     content: str = Field(description="The text content of the message.")
 
 
-# ── Chat ────────────────────────────────────────────────────────────
+#  Chat 
 
 
 class ChatRequest(BaseModel):
@@ -18,7 +18,7 @@ class ChatRequest(BaseModel):
     )
 
 
-# ── Summarize ───────────────────────────────────────────────────────
+#  Summarize 
 
 
 class SummarizeRequest(BaseModel):
@@ -29,7 +29,7 @@ class SummarizeResponse(BaseModel):
     title: str = Field(description="A short (≤5 words) conversation title.")
 
 
-# ── Datasets ────────────────────────────────────────────────────────
+#  Datasets 
 
 
 class DatasetInfo(BaseModel):
@@ -43,7 +43,7 @@ class DatasetsResponse(BaseModel):
     datasets: list[DatasetInfo] = Field(description="Metadata for every loaded CSV.")
 
 
-# ── Version ─────────────────────────────────────────────────────────
+#  Version 
 
 
 class VersionResponse(BaseModel):

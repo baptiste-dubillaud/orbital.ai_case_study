@@ -16,9 +16,9 @@ function writeAll(conversations: Conversation[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(conversations));
 }
 
-/** Get all conversations sorted newest first */
+/** Get all conversations sorted newest-created first (stable order) */
 export function getAllConversations(): Conversation[] {
-  return readAll().sort((a, b) => b.updatedAt - a.updatedAt);
+  return readAll().sort((a, b) => b.createdAt - a.createdAt);
 }
 
 /** Get a single conversation by id */

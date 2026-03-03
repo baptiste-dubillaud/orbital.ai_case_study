@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 router = APIRouter(prefix="/llm", tags=["LLM"])
 
 
-# ── Summarizer (reused across requests) ─────────────────────────────
+#  Summarizer (reused across requests) 
 
 _summarizer = Agent(
     model=settings.llm_model,
@@ -24,7 +24,7 @@ _summarizer = Agent(
 )
 
 
-# ── Routes ──────────────────────────────────────────────────────────
+#  Routes 
 
 
 @router.post(

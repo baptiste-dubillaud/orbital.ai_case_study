@@ -25,7 +25,7 @@ function ChatBubble({ message, index, streaming = false }: ChatBubbleProps) {
 
   const stale = useStaleDetection(streaming, message.reasoning, hasContent);
 
-  /* ── Reasoning: expanded during streaming until content arrives ── */
+  /*  Reasoning: expanded during streaming until content arrives  */
   const reasoningExpanded = streaming && !hasContent;
 
   return (
