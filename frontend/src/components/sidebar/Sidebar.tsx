@@ -4,7 +4,7 @@ import { memo, useMemo } from "react";
 import { useConversationContext } from "@/context/ConversationContext";
 import { useThemeContext } from "@/context/ThemeContext";
 import { Conversation } from "@/lib/types";
-import styles from "@/styles/components/Sidebar.module.css";
+import styles from "./Sidebar.module.css";
 
 /*  Period grouping  */
 

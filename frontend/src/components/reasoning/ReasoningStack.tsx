@@ -3,16 +3,11 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ReasoningItem } from "@/lib/types";
-import styles from "@/styles/components/ReasoningStack.module.css";
-
+import styles from "./ReasoningStack.module.css";
 
 // Single reasoning item renderer
 
-function ReasoningItemView({
-  item,
-}: {
-  item: ReasoningItem;
-}) {
+function ReasoningItemView({ item }: { item: ReasoningItem }) {
   if (item.type === "thinking") {
     return (
       <div className={styles.thinking}>
@@ -55,11 +50,17 @@ function ReasoningItemView({
   );
 }
 
-/* 
+/*
  * Reasoning stack content
  */
 
-function ReasoningStackContent({ items, callingTool }: { items: ReasoningItem[]; callingTool?: boolean }) {
+function ReasoningStackContent({
+  items,
+  callingTool,
+}: {
+  items: ReasoningItem[];
+  callingTool?: boolean;
+}) {
   return (
     <div className={styles.stack}>
       {items.map((item, i) => (
@@ -79,7 +80,7 @@ function ReasoningStackContent({ items, callingTool }: { items: ReasoningItem[];
   );
 }
 
-/* 
+/*
  * Unified ReasoningStack
  *
  *  expanded = true  → stack visible (live streaming)
@@ -117,9 +118,9 @@ export default function ReasoningStack({
         items
           .filter(
             (item): item is Extract<ReasoningItem, { type: "tool_call" }> =>
-              item.type === "tool_call"
+              item.type === "tool_call",
           )
-          .map((item) => item.toolCall.toolName)
+          .map((item) => item.toolCall.toolName),
       ),
     ];
     const hasThinking = items.some((item) => item.type === "thinking");
@@ -140,7 +141,13 @@ export default function ReasoningStack({
       >
         <span className={`${styles.arrow} ${open ? styles.arrowOpen : ""}`}>
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M4.5 2.5L8 6L4.5 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d="M4.5 2.5L8 6L4.5 9.5"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         </span>
         <span className={styles.label}>{label}</span>

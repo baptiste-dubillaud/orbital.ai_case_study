@@ -4,10 +4,10 @@ import { memo, useRef, KeyboardEvent } from "react";
 import { motion } from "framer-motion";
 import { useChatContext } from "@/context/ChatContext";
 import { useAutoResize } from "@/hooks";
-import DatasetCards from "./DatasetCards";
-import styles from "@/styles/components/ChatInput.module.css";
+import { DatasetCards } from "./DatasetCards";
+import styles from "./ChatInput.module.css";
 
-function ChatInput() {
+function ChatInputInner() {
   const { input, setInput, handleSend, isLoading, hasMessages } =
     useChatContext();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -37,14 +37,14 @@ function ChatInput() {
     >
       {!hasMessages && (
         <>
-            <motion.h1
+          <motion.h1
             className={styles.title}
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            >
+          >
             What can I help you with?
-            </motion.h1>
-            <DatasetCards />
+          </motion.h1>
+          <DatasetCards />
         </>
       )}
 
@@ -85,4 +85,4 @@ function ChatInput() {
   );
 }
 
-export default memo(ChatInput);
+export const ChatInput = memo(ChatInputInner);

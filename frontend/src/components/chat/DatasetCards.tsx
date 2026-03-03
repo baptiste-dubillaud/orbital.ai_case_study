@@ -3,9 +3,9 @@
 import { memo, useCallback } from "react";
 import { useChatContext } from "@/context/ChatContext";
 import { useDatasetContext } from "@/context/DatasetContext";
-import styles from "@/styles/components/DatasetCards.module.css";
+import styles from "./DatasetCards.module.css";
 
-function DatasetCards() {
+function DatasetCardsInner() {
   const { datasets } = useDatasetContext();
   const { hasMessages, handleSend } = useChatContext();
 
@@ -13,7 +13,7 @@ function DatasetCards() {
     (name: string) => {
       handleSend(`Give me basic statistics on this dataset: ${name}`);
     },
-    [handleSend]
+    [handleSend],
   );
 
   if (hasMessages || datasets.length === 0) return null;
@@ -47,4 +47,4 @@ function DatasetCards() {
   );
 }
 
-export default memo(DatasetCards);
+export const DatasetCards = memo(DatasetCardsInner);

@@ -3,7 +3,7 @@
 import { memo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import styles from "@/styles/components/Markdown.module.css";
+import styles from "./Markdown.module.css";
 import { ReactNode } from "react";
 
 /* Stable references — avoid re-creating on every render */

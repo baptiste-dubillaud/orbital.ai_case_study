@@ -4,10 +4,10 @@ import { memo } from "react";
 import { motion } from "framer-motion";
 import { ChatMessage } from "@/lib/types";
 import { useStaleDetection } from "@/hooks";
-import MarkdownRenderer from "./MarkdownRenderer";
-import ReasoningStack from "./ReasoningStack";
-import PlotViewer from "./PlotViewer";
-import styles from "@/styles/components/ChatBubble.module.css";
+import { MarkdownRenderer } from "@/components/markdown";
+import { ReasoningStack } from "@/components/reasoning";
+import { PlotViewer } from "@/components/plot";
+import styles from "./ChatBubble.module.css";
 
 interface ChatBubbleProps {
   message: ChatMessage;
@@ -15,7 +15,7 @@ interface ChatBubbleProps {
   streaming?: boolean;
 }
 
-function ChatBubble({ message, index, streaming = false }: ChatBubbleProps) {
+function ChatBubbleInner({ message, index, streaming = false }: ChatBubbleProps) {
   const isUser = message.role === "user";
   const hasReasoning =
     !isUser && message.reasoning && message.reasoning.length > 0;
@@ -64,4 +64,4 @@ function ChatBubble({ message, index, streaming = false }: ChatBubbleProps) {
   );
 }
 
-export default memo(ChatBubble);
+export const ChatBubble = memo(ChatBubbleInner);

@@ -4,11 +4,11 @@ import { useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useChatContext } from "@/context/ChatContext";
 import { useScrollToBottom } from "@/hooks";
-import ChatBubble from "./ChatBubble";
-import ChatInput from "./ChatInput";
-import Sidebar from "./Sidebar";
+import { ChatBubble } from "./ChatBubble";
+import { ChatInput } from "./ChatInput";
+import { Sidebar } from "@/components/sidebar";
 import { ChatMessage } from "@/lib/types";
-import styles from "@/styles/components/ChatLayout.module.css";
+import styles from "./ChatLayout.module.css";
 
 export default function ChatLayout() {
   const {
