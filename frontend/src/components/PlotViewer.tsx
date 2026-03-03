@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState, useEffect } from "react";
+import { memo, useState, useEffect, useRef, useCallback } from "react";
 import { API_BASE } from "@/lib/api";
 import { useThemeContext, Theme } from "@/context/ThemeContext";
 import styles from "@/styles/components/PlotViewer.module.css";
@@ -39,8 +39,13 @@ function bodyScript(theme: Theme): string {
     'var l=g.layout||{};for(var k in l){',
     `if(/^xaxis\\d/.test(k))d[k]={gridcolor:"${gridColor}",zerolinecolor:"${zeroColor}",tickfont:{color:"${tickColor}"},title:{font:{color:"${tickColor}"}}};`,
     `if(/^yaxis\\d/.test(k))d[k]={gridcolor:"${gridColor}",zerolinecolor:"${zeroColor}",tickfont:{color:"${tickColor}"},title:{font:{color:"${tickColor}"}}};`,
-    '}Plotly.relayout(g,d).then(function(){g.style.visibility="visible"});',
+    '}Plotly.relayout(g,d).then(function(){g.style.visibility="visible";r()});',
     '}else{setTimeout(a,50)}}',
+    /* Height reporter: sends measured height to parent on load and on resize */
+    'function r(){var h=Math.max(document.body.scrollHeight,document.documentElement.scrollHeight);',
+    'parent.postMessage({type:"plot-height",height:h},"*")}',
+    'var ro=new ResizeObserver(function(){r()});',
+    'ro.observe(document.body);',
     'if(document.readyState==="complete")a();',
     'else window.addEventListener("load",a);',
     '})();</script>',
@@ -57,6 +62,28 @@ function PlotFrame({ file }: { file: string }) {
   const [error, setError] = useState(false);
   /* Store the raw HTML so we can re-theme without re-fetching */
   const [rawHtml, setRawHtml] = useState<string | null>(null);
+  const [frameHeight, setFrameHeight] = useState(450);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  /* Listen for height messages from the iframe */
+  const onMessage = useCallback(
+    (e: MessageEvent) => {
+      if (
+        e.data?.type === "plot-height" &&
+        typeof e.data.height === "number" &&
+        iframeRef.current &&
+        e.source === iframeRef.current.contentWindow
+      ) {
+        setFrameHeight(Math.max(300, e.data.height));
+      }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [onMessage]);
 
   /* Fetch the raw HTML once */
   useEffect(() => {
@@ -98,8 +125,10 @@ function PlotFrame({ file }: { file: string }) {
         </div>
       ) : (
         <iframe
+          ref={iframeRef}
           srcDoc={html}
           className={styles.iframe}
+          style={{ height: frameHeight }}
           sandbox="allow-scripts"
           title={file.replace(/[_-]/g, " ").replace(/\.html$/, "")}
         />
