@@ -29,7 +29,7 @@ function bodyScript(theme: Theme): string {
     '<script>(function(){',
     `var d={paper_bgcolor:"${paperBg}",plot_bgcolor:"${plotBg}",`,
     `font:{color:"${fontColor}",family:"system-ui,sans-serif"},`,
-    `title:{font:{color:"${fontColor}"}},`,
+    `"title.font.color":"${fontColor}",`,
     `colorway:${colorway},`,
     `xaxis:{gridcolor:"${gridColor}",zerolinecolor:"${zeroColor}",tickfont:{color:"${tickColor}"},title:{font:{color:"${tickColor}"}}},`,
     `yaxis:{gridcolor:"${gridColor}",zerolinecolor:"${zeroColor}",tickfont:{color:"${tickColor}"},title:{font:{color:"${tickColor}"}}},`,
