@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { ReasoningItem } from "@/lib/types";
 
 /**
@@ -12,39 +12,19 @@ export function useStaleDetection(
   timeoutMs = 500
 ): boolean {
   const [stale, setStale] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const prevSnapshotRef = useRef("");
 
   useEffect(() => {
     if (!streaming || hasContent) {
       setStale(false);
-      if (timerRef.current) clearTimeout(timerRef.current);
-      prevSnapshotRef.current = "";
       return;
     }
 
-    // Build a lightweight snapshot — changes whenever new data arrives.
-    const snapshot =
-      String(reasoning?.length ?? 0) +
-      ":" +
-      (reasoning
-        ?.map((r) =>
-          r.type === "thinking"
-            ? r.content.length
-            : r.toolCall.toolCallId + (r.toolCall.result ? "R" : "")
-        )
-        .join(",") ?? "");
-
-    if (snapshot !== prevSnapshotRef.current) {
-      prevSnapshotRef.current = snapshot;
-      setStale(false);
-      if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => setStale(true), timeoutMs);
-    }
-
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
+    // Something changed (reasoning ref updates on every chunk) — reset the
+    // dead-man's switch.  If nothing new arrives within `timeoutMs` the
+    // stream is considered stalled.
+    setStale(false);
+    const timer = setTimeout(() => setStale(true), timeoutMs);
+    return () => clearTimeout(timer);
   }, [streaming, reasoning, hasContent, timeoutMs]);
 
   return stale;

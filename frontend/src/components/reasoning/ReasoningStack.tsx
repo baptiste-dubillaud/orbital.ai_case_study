@@ -2,13 +2,13 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ReasoningItem } from "@/lib/types";
+import { ReasoningItem, SSE_EVENT } from "@/lib/types";
 import styles from "./ReasoningStack.module.css";
 
 // Single reasoning item renderer
 
 function ReasoningItemView({ item }: { item: ReasoningItem }) {
-  if (item.type === "thinking") {
+  if (item.type === SSE_EVENT.THINKING) {
     return (
       <div className={styles.thinking}>
         <p className={styles.thinkingText}>{item.content}</p>
@@ -83,10 +83,10 @@ function ReasoningStackContent({
 /*
  * Unified ReasoningStack
  *
- *  expanded = true  → stack visible (live streaming)
- *  expanded = false → collapsed behind toggle (finalized)
+ *  expanded = true  > stack visible (live streaming)
+ *  expanded = false > collapsed behind toggle (finalized)
  *
- * When `expanded` transitions from true → false the
+ * When `expanded` transitions from true > false the
  * section auto-collapses.
  */
 
@@ -101,7 +101,7 @@ export default function ReasoningStack({
 }) {
   const [open, setOpen] = useState(expanded);
 
-  // Auto-collapse when expanded flips from true → false
+  // Auto-collapse when expanded flips from true > false
   useEffect(() => {
     if (expanded) {
       setOpen(true);
@@ -117,13 +117,13 @@ export default function ReasoningStack({
       ...new Set(
         items
           .filter(
-            (item): item is Extract<ReasoningItem, { type: "tool_call" }> =>
-              item.type === "tool_call",
+            (item): item is Extract<ReasoningItem, { type: typeof SSE_EVENT.TOOL_CALL }> =>
+              item.type === SSE_EVENT.TOOL_CALL,
           )
           .map((item) => item.toolCall.toolName),
       ),
     ];
-    const hasThinking = items.some((item) => item.type === "thinking");
+    const hasThinking = items.some((item) => item.type === SSE_EVENT.THINKING);
     return [
       hasThinking ? "Reasoning" : "",
       toolNames.length > 0 ? toolNames.join(", ") : "",

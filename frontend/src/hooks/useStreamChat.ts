@@ -103,11 +103,10 @@ export function useStreamChat({
               );
               setLiveReasoning([...reasoningRef.current]);
             },
-            onToolResult: (toolCallId, toolName, result) => {
+            onToolResult: (toolCallId, result) => {
               reasoningRef.current = mergeToolResult(
                 reasoningRef.current,
                 toolCallId,
-                toolName,
                 result,
               );
               setLiveReasoning([...reasoningRef.current]);
@@ -147,7 +146,8 @@ export function useStreamChat({
         if (isFirstMessage) {
           autoRename(trimmed);
         }
-      } catch {
+      } catch (err) {
+        console.error("Chat stream failed:", err);
         setMessages((prev) => [
           ...prev,
           {

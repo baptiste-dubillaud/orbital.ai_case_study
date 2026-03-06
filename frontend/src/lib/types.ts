@@ -6,10 +6,25 @@ export interface DatasetInfo {
   column_names: string[];
 }
 
+// ---------------------------------------------------------------------------
+// SSE / LLM event type constants
+// ---------------------------------------------------------------------------
+
+export const SSE_EVENT = {
+  THINKING: "thinking",
+  CONTENT: "content",
+  TOOL_CALL: "tool_call",
+  TOOL_RESULT: "tool_result",
+  DONE: "Done",
+  ERROR: "error",
+} as const;
+
+export type SSEEventType = (typeof SSE_EVENT)[keyof typeof SSE_EVENT];
+
 /* Reasoning items */
 export type ReasoningItem =
-  | { type: "thinking"; content: string }
-  | { type: "tool_call"; toolCall: ToolCall };
+  | { type: typeof SSE_EVENT.THINKING; content: string }
+  | { type: typeof SSE_EVENT.TOOL_CALL; toolCall: ToolCall };
 
 /* History messages */
 export interface ChatMessage {
@@ -49,7 +64,7 @@ export interface ChatMessageRequest {
 export interface StreamCallbacks {
   onThinkingChunk: (chunk: string) => void;
   onToolCall: (toolCall: ToolCall) => void;
-  onToolResult: (toolCallId: string, toolName: string, result: string) => void;
+  onToolResult: (toolCallId: string, result: string) => void;
   onContent: (chunk: string) => void;
   onDone: () => void;
   onError: (error: string) => void;

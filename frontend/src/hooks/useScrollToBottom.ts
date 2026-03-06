@@ -28,7 +28,7 @@ export function useScrollToBottom<T>(
     const el = containerRef.current;
     if (!el) return;
 
-    // wheel / touchmove → user is actively scrolling
+    // wheel / touchmove > user is actively scrolling
     const disengage = () => {
       lockedRef.current = false;
     };

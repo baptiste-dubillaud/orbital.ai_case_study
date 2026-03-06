@@ -1,4 +1,4 @@
-import { ReasoningItem, ToolCall } from "./types";
+import { ReasoningItem, SSE_EVENT, ToolCall } from "./types";
 
 /** Append a thinking chunk to the reasoning array, merging consecutive thinking items. */
 export function appendThinkingChunk(
@@ -6,13 +6,13 @@ export function appendThinkingChunk(
   chunk: string,
 ): ReasoningItem[] {
   const last = items[items.length - 1];
-  if (last?.type === "thinking") {
+  if (last?.type === SSE_EVENT.THINKING) {
     return [
       ...items.slice(0, -1),
-      { type: "thinking", content: last.content + chunk },
+      { type: SSE_EVENT.THINKING, content: last.content + chunk },
     ];
   }
-  return [...items, { type: "thinking", content: chunk }];
+  return [...items, { type: SSE_EVENT.THINKING, content: chunk }];
 }
 
 /** Append a new tool call entry to the reasoning array. */
@@ -20,28 +20,23 @@ export function appendToolCall(
   items: ReasoningItem[],
   tc: ToolCall,
 ): ReasoningItem[] {
-  return [...items, { type: "tool_call", toolCall: tc }];
+  return [...items, { type: SSE_EVENT.TOOL_CALL, toolCall: tc }];
 }
 
 /** Merge a tool result into the matching tool call entry. */
 export function mergeToolResult(
   items: ReasoningItem[],
   toolCallId: string,
-  toolName: string,
   result: string,
 ): ReasoningItem[] {
   return items.map((item) => {
     if (
-      item.type === "tool_call" &&
+      item.type === SSE_EVENT.TOOL_CALL &&
       item.toolCall.toolCallId === toolCallId
     ) {
       return {
         ...item,
-        toolCall: {
-          ...item.toolCall,
-          toolName: item.toolCall.toolName || toolName,
-          result,
-        },
+        toolCall: { ...item.toolCall, result },
       };
     }
     return item;
