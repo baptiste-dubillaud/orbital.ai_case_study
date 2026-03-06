@@ -17,53 +17,73 @@ L'agent est construit avec [PydanticAI](https://ai.pydantic.dev/).
 
 ## Architecture
 
-```
-backend/
-├── src/
-│   ├── main.py                    # FastAPI entrypoint
-│   ├── config/config.py           # Env-based settings
-│   ├── agent/
-│   │   ├── agent.py               # PydanticAI agent setup
-│   │   ├── context.py             # Dependency context for tools
-│   │   ├── prompt.py              # System prompt
-│   │   └── tools/
-│   │       ├── query_data.py      # SQL via DuckDB
-│   │       └── visualize.py       # Plotly chart generation
-│   ├── api/
-│   │   ├── models/
-│   │   │   ├── schemas.py         # Request/response Pydantic models
-│   │   │   └── streaming/sse.py   # SSE frame helpers
-│   │   └── v1/
-│   │       ├── llm/               # /chat (SSE) + /summarize
-│   │       ├── data/              # /data (dataset info)
-│   │       └── output/            # /output (serve generated files)
-│   ├── services/
-│   │   ├── streaming.py           # Agent streaming logic (SSE generator)
-│   │   └── history.py             # Message history conversion
-│   └── data/loader.py             # CSV loader (singleton)
-├── data/                          # CSV datasets (mounted volume)
-└── output/                        # Generated plots & tables
+### Backend (FastAPI + PydanticAI)
 
-frontend/
-├── src/
-│   ├── app/                       # Next.js App Router (layout + page)
-│   ├── components/
-│   │   ├── ChatLayout.tsx         # Message list orchestrator
-│   │   ├── ChatBubble.tsx         # Unified bubble (finalized + streaming)
-│   │   ├── ChatInput.tsx          # Input area
-│   │   ├── ReasoningStack.tsx     # Thinking + tool calls display
-│   │   ├── PlotViewer.tsx         # Plotly iframe viewer
-│   │   ├── Sidebar.tsx            # Conversation list
-│   │   ├── DatasetCards.tsx       # Landing page dataset cards
-│   │   └── MarkdownRenderer.tsx   # Markdown rendering
-│   ├── context/ChatContext.tsx    # Chat state & streaming management
-│   ├── lib/
-│   │   ├── api.ts                 # API layer (SSE + REST)
-│   │   ├── types.ts               # Shared TypeScript types
-│   │   └── storage.ts             # localStorage persistence
-│   └── styles/components/         # CSS Modules
-└── package.json
 ```
+backend/src/
+├── main.py                        # FastAPI app & middleware
+├── config/
+│   ├── config.py                  # Env-based settings (Pydantic)
+├── agent/
+│   ├── agent.py                   # PydanticAI agent setup
+│   ├── context.py                 # AgentContext (deps for tools)
+│   ├── prompt.py                  # System prompt builder
+│   └── tools/
+│       ├── query_data.py          # SQL queries via DuckDB
+│       └── visualize.py           # Plotly chart generation
+├── api/
+│   ├── models/
+│   │   ├── schemas.py             # Request/response Pydantic models
+│   │   └── streaming/sse.py       # SSE frame helpers
+│   └── v1/
+│       ├── llm/                   # /chat (SSE stream) + /summarize
+│       ├── data/                  # /data (dataset metadata)
+│       └── output/                # /output (serve generated files)
+├── services/
+│   ├── streaming.py               # SSE generator (agent > events)
+│   └── history.py                 # Frontend messages > ModelMessage
+└── data/loader.py                 # CSV loader (singleton)
+```
+
+**Flow:** HTTP request > `streaming.py` runs the agent > events yield SSE frames > frontend consumes the stream.
+
+### Frontend (Next.js App Router)
+
+```
+frontend/src/
+├── app/                           # Next.js App Router (layout + page)
+├── components/
+│   ├── chat/
+│   │   ├── ChatLayout.tsx         # Message list orchestrator
+│   │   ├── ChatBubble.tsx         # User/assistant bubble (streaming-aware)
+│   │   ├── ChatInput.tsx          # Input area with auto-resize
+│   │   └── DatasetCards.tsx       # Landing page dataset cards
+│   ├── reasoning/
+│   │   └── ReasoningStack.tsx     # Thinking + tool calls (collapsible)
+│   ├── plot/
+│   │   └── PlotViewer.tsx         # Plotly iframe viewer
+│   ├── markdown/
+│   │   └── MarkdownRenderer.tsx   # Markdown rendering
+│   └── sidebar/
+│       └── Sidebar.tsx            # Conversation list
+├── context/
+│   ├── ChatContext.tsx            # Composes conversation + streaming
+│   ├── ConversationContext.tsx    # CRUD + persistence
+│   ├── DatasetContext.tsx         # Dataset list from API
+│   └── ThemeContext.tsx           # Light/dark theme
+├── hooks/
+│   ├── useStreamChat.ts           # SSE streaming + state management
+│   ├── useStaleDetection.ts       # Dead-man's switch for stalled streams
+│   ├── useAutoResize.ts           # Textarea auto-height
+│   └── useScrollToBottom.ts       # Auto-scroll on new messages
+└── lib/
+    ├── api.ts                     # API layer (apiFetch, SSE parser)
+    ├── types.ts                   # Shared types & SSE event constants
+    ├── reasoning.ts               # Reasoning array helpers
+    └── storage.ts                 # localStorage persistence
+```
+
+**Flow:** `useStreamChat` calls `api.ts` > SSE frames are parsed and dispatched via callbacks > React state updates drive the component tree.
 
 ---
 
@@ -137,6 +157,8 @@ Le backend streame les événements suivants au frontend :
 - [x] **Stale thinking detection** — indicateur "Calling tool…" quand le modèle prépare un appel d'outil (frontend-side)
 - [x] **Live reasoning stack** — le raisonnement se collapse automatiquement quand la réponse finale commence
 - [x] **Framer Motion** — animations sur les messages, le reasoning expand/collapse, et les transitions
+- [x] **Conversation history** — historique de conversations
+- [x] **Light/Dark theme**
 
 ---
 
